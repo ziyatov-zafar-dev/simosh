@@ -71,7 +71,7 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
           {product.category[lang]}
         </div>
         {activeDiscount && (
-          <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-rose-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
+          <div className="absolute top-3 right-3 md:top-4 md:left-4 bg-rose-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
             {product.discount?.type === 'PERCENT' ? `-${product.discount?.value}%` : 'SALE'}
           </div>
         )}
@@ -260,7 +260,20 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
 export default function App() {
   const [db, setDb] = useState<Database>(() => {
     const saved = localStorage.getItem('simosh_db');
-    return saved ? JSON.parse(saved) : INITIAL_DB;
+    if (!saved) return INITIAL_DB;
+    
+    try {
+      const parsed = JSON.parse(saved);
+      // Migration: Ensure promoCodes exists
+      return {
+        ...INITIAL_DB,
+        ...parsed,
+        promoCodes: parsed.promoCodes || INITIAL_DB.promoCodes,
+        products: parsed.products || INITIAL_DB.products
+      };
+    } catch (e) {
+      return INITIAL_DB;
+    }
   });
 
   const [lang, setLang] = useState<Language>(() => {
@@ -507,10 +520,11 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
 
   const handleApplyPromo = () => {
     setPromoError(null);
-    if (!promoInput.trim()) return;
+    const inputCode = promoInput.trim().toUpperCase();
+    if (!inputCode) return;
 
-    // Use current promoCodes from DB
-    const code = promoCodes.find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === promoInput.trim().toUpperCase());
+    // Use current promoCodes from prop
+    const code = promoCodes.find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
     
     if (!code) {
       setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas!" : "Promo code not found!");
