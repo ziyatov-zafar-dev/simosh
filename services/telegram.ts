@@ -3,29 +3,35 @@ import { OrderData } from '../types';
 import { TELEGRAM_BOT_TOKEN, CHAT_IDS } from '../constants';
 
 export const sendOrderToTelegram = async (order: OrderData) => {
+  // Brauzerning originidan WebApp URL manzilini olamiz
   const baseUrl = window.location.origin + window.location.pathname;
   const adminOrderUrl = `${baseUrl}#/admin?orderId=${order.id}`;
 
   const message = `
-<b>📦 Yangi Buyurtma #${order.id.slice(-6)}</b>
-
+<b>📦 YANGI BUYURTMA #${order.id.slice(-6)}</b>
+━━━━━━━━━━━━━━━━━━
 <b>👤 Mijoz:</b> ${order.firstName} ${order.lastName}
 <b>📞 Telefon:</b> ${order.customerPhone}
 <b>🌐 Til:</b> ${order.language.toUpperCase()}
 
 <b>🛒 Mahsulotlar:</b>
-${order.items.map(item => `• ${item.product.translations.uz.name} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} UZS`).join('\n')}
+${order.items.map(item => `• <b>${item.product.translations.uz.name}</b> (x${item.quantity}) - ${(item.product.price * item.quantity).toLocaleString()} UZS`).join('\n')}
 
-${order.appliedPromo ? `<b>🏷 Promo:</b> ${order.appliedPromo}\n<b>📉 Chegirma:</b> ${order.discountAmount?.toLocaleString()} UZS\n` : ''}
-<b>💰 Jami:</b> ${order.totalPrice.toLocaleString()} UZS
+━━━━━━━━━━━━━━━━━━
+<b>💰 JAMI SUMMA:</b> ${order.totalPrice.toLocaleString()} UZS
+${order.comment ? `\n<b>📝 Izoh:</b> <i>${order.comment}</i>` : ''}
 
-<b>📝 Izoh:</b> ${order.comment || "Yo'q"}
+⚠️ <i>Buyurtmani boshqarish uchun quyidagi tugmani bosing:</i>
   `.trim();
 
   const keyboard = {
     inline_keyboard: [
       [
-        { text: "👁 Buyurtmani ko'rish", url: adminOrderUrl }
+        { text: "👁 Buyurtmani ko'rish (WebApp)", url: adminOrderUrl }
+      ],
+      [
+        { text: "✅ Tasdiqlash", url: adminOrderUrl },
+        { text: "❌ Bekor qilish", url: adminOrderUrl }
       ]
     ]
   };
@@ -35,14 +41,14 @@ ${order.appliedPromo ? `<b>🏷 Promo:</b> ${order.appliedPromo}\n<b>📉 Chegir
 
 export const sendContactToTelegram = async (contact: { name: string, phone: string, message: string, language: string }) => {
   const text = `
-<b>📩 Yangi Aloqa Xabari!</b>
-
+<b>📩 YANGI ALOQA XABARI!</b>
+━━━━━━━━━━━━━━━━━━
 <b>👤 Ism:</b> ${contact.name}
 <b>📞 Telefon:</b> ${contact.phone}
 <b>🌐 Til:</b> ${contact.language.toUpperCase()}
 
 <b>📝 Xabar:</b>
-${contact.message}
+<i>${contact.message}</i>
   `.trim();
 
   return sendMessage(text);
@@ -67,7 +73,7 @@ async function sendMessage(text: string, replyMarkup?: any) {
     );
     return results.some(res => res === true);
   } catch (error) {
-    console.error("Telegram error:", error);
+    console.error("Telegram xatolik:", error);
     return false;
   }
 }
