@@ -63,7 +63,7 @@ const getEffectivePrice = (product: Product) => {
 };
 
 const ProductCard = ({ product, categories, onAdd }: { product: Product, categories: Category[], onAdd: (p: Product, q: number) => void }) => {
-  const { lang, t } = useContext(LanguageContext);
+  const { lang, t, showToast } = useContext(LanguageContext);
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
@@ -77,8 +77,57 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
     setQuantity(1);
   };
 
+  const increaseQuantity = () => {
+    if (quantity < product.stock) {
+      setQuantity(quantity + 1);
+    } else {
+      const msg = lang === 'uz' ? "Boshqa mahsulot qolmagan" : 
+                  lang === 'ru' ? "Больше товара нет" : 
+                  lang === 'tr' ? "Daha fazla ürün kalmadı" : "No more items left";
+      showToast(msg);
+    }
+  };
+
   return (
     <div className="product-card bg-white dark:bg-white/5 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden flex flex-col h-full group">
+      {/* Configuration Overlay Panel */}
+      <div className={`absolute inset-x-0 bottom-0 z-20 p-4 md:p-6 bg-white/95 dark:bg-brand-dark/95 backdrop-blur-xl border-t border-brand-mint/20 rounded-t-[2.5rem] transition-all duration-500 ease-out transform ${isConfiguring ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-mint">{t.cart.title}</span>
+          <button onClick={() => setIsConfiguring(false)} className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-white/10 rounded-full text-gray-500 hover:text-rose-500 transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 p-2 rounded-2xl border border-gray-100 dark:border-white/5">
+            <button 
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white hover:scale-105 active:scale-90 transition-all"
+            >
+              <Minus size={18} />
+            </button>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-black">{quantity}</span>
+              <span className="text-[8px] font-bold uppercase opacity-30">Dona</span>
+            </div>
+            <button 
+              onClick={increaseQuantity}
+              className="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white hover:scale-105 active:scale-90 transition-all"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+          
+          <button 
+            onClick={handleAddClick}
+            className="w-full py-4 md:py-5 gradient-mint text-white rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+          >
+            <ShoppingBag size={18} /> {t.cart.add}
+          </button>
+        </div>
+      </div>
+
       <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] md:rounded-[2rem] mb-4 md:mb-6">
         <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={product.translations[lang].name} />
         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-white/90 dark:bg-brand-dark/90 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg">
@@ -99,7 +148,7 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
         <div className="flex flex-col border-t border-gray-50 dark:border-white/5 pt-3 mb-2">
-          <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
+          <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">{lang === 'uz' ? 'Narxi' : lang === 'ru' ? 'Цена' : 'Price'}</span>
           {activeDiscount ? (
             <div className="flex items-end gap-2">
               <span className="text-xl md:text-2xl font-black text-rose-500 leading-none">{effectivePrice.toLocaleString()} <span className="text-[10px] uppercase">{product.currency}</span></span>
@@ -111,44 +160,12 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
         </div>
 
         <div className="pt-2 min-h-[50px] md:min-h-[60px] flex items-center mt-auto">
-          {!isConfiguring ? (
-            <button 
-              onClick={() => setIsConfiguring(true)} 
-              className={`w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
-            >
-              {product.stock <= 0 ? <><X size={16} /> Sotuvda yo'q</> : <><Plus size={16} /> Tanlash</>}
-            </button>
-          ) : (
-            <div className="w-full flex gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex-1 flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-xl md:rounded-2xl p-1 border border-brand-mint/20">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="text-sm md:text-lg font-black">{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-              <button 
-                onClick={handleAddClick}
-                className="px-6 md:px-8 py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <ShoppingBag size={14} /> {t.cart.add}
-              </button>
-              <button 
-                onClick={() => setIsConfiguring(false)}
-                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-gray-100 dark:bg-white/10 rounded-xl md:rounded-2xl text-gray-400"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
+          <button 
+            onClick={() => setIsConfiguring(true)} 
+            className={`w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
+          >
+            {product.stock <= 0 ? <><X size={16} /> Sotuvda yo'q</> : <><Plus size={16} /> Tanlash</>}
+          </button>
         </div>
       </div>
     </div>
@@ -344,6 +361,13 @@ export default function App() {
   const updateCartQuantity = (productId: number, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.product.id === productId) {
+        if (delta > 0 && item.quantity >= item.product.stock) {
+          const msg = lang === 'uz' ? "Boshqa mahsulot qolmagan" : 
+                      lang === 'ru' ? "Больше товара нет" : 
+                      lang === 'tr' ? "Daha fazla ürün kalmadı" : "No more items left";
+          setToast(msg);
+          return item;
+        }
         const newQty = Math.max(1, Math.min(item.product.stock, item.quantity + delta));
         return { ...item, quantity: newQty };
       }
