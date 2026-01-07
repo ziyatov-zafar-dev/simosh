@@ -537,6 +537,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     const inputCode = promoInput.trim().toUpperCase();
     if (!inputCode) return;
 
+    // 1. Find the code
     const code = (promoCodes || []).find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
     
     if (!code) {
@@ -545,24 +546,23 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
       return;
     }
 
-    const now = getUzbekistanTime();
-    const expiryDate = new Date(code.expiry_date);
-    
-    // Check if the code is active first
+    // 2. Check if active
     if (!code.is_active) {
       setPromoError(t.cart.promoErrorInactive);
       setAppliedPromo(null);
       return;
     }
 
-    // Check if the code has expired
+    // 3. Check expiry
+    const now = getUzbekistanTime();
+    const expiryDate = new Date(code.expiry_date);
     if (now > expiryDate) {
       setPromoError(t.cart.promoErrorExpired);
       setAppliedPromo(null);
       return;
     }
 
-    // Check minimum order amount
+    // 4. Check minimum order amount
     if (subtotal < code.min_amount) {
       const msg = t.cart.promoErrorMinAmount.replace('{amount}', code.min_amount.toLocaleString());
       setPromoError(msg);
@@ -570,6 +570,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
       return;
     }
 
+    // 5. Success
     setAppliedPromo(code);
     setPromoError(null);
     showToast(t.cart.promoSuccess);

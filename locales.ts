@@ -38,7 +38,7 @@ export const translations: Record<Language, any> = {
       promoLabel: 'Промокод',
       promoApply: 'Применить',
       promoSuccess: 'Промокод успешно применен!',
-      promoErrorNotFound: 'Такой промокод не существует!',
+      promoErrorNotFound: 'Такого промокода не существует!',
       promoErrorExpired: 'Срок действия этого промокода истек!',
       promoErrorInactive: 'Этот промокод в данный момент неактивен!',
       promoErrorMinAmount: 'Минимальная сумма заказа для этого промокода: {amount} сум!',
