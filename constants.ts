@@ -52,14 +52,6 @@ export const INITIAL_DB: Database = {
         start_date: "2024-01-01T00:00:00Z",
         end_date: "2026-12-31T23:59:59Z"
       },
-      promo_code: {
-        code: "SIMOSH2026",
-        type: "FIXED",
-        value: 5000,
-        start_date: "2024-01-10T00:00:00Z",
-        end_date: "2026-02-10T23:59:59Z",
-        usage_limit: 100
-      },
       stock: 50,
       is_active: true,
       created_at: "2024-01-08T00:00:00Z",
@@ -70,6 +62,24 @@ export const INITIAL_DB: Database = {
         en: "Botanical",
         tr: "Botanik"
       }
+    }
+  ],
+  promoCodes: [
+    {
+      id: "1",
+      code: "SIMOSH2025",
+      type: "PERCENT",
+      value: 10,
+      expiry_date: "2025-12-31T23:59:59Z",
+      is_active: true
+    },
+    {
+      id: "2",
+      code: "YANGIYIL",
+      type: "FIXED",
+      value: 20000,
+      expiry_date: "2025-01-15T23:59:59Z",
+      is_active: true
     }
   ],
   about: {

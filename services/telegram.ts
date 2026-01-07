@@ -3,7 +3,6 @@ import { OrderData } from '../types';
 import { TELEGRAM_BOT_TOKEN, CHAT_IDS } from '../constants';
 
 export const sendOrderToTelegram = async (order: OrderData) => {
-  // Admin uchun ma'lumotlar faqat o'zbek tilida
   const l = { 
     order: "Yangi Buyurtma", 
     customer: "Mijoz", 
@@ -11,7 +10,9 @@ export const sendOrderToTelegram = async (order: OrderData) => {
     items: "Mahsulotlar", 
     total: "Jami",
     userLang: "Foydalanuvchi tili",
-    comment: "Izoh"
+    comment: "Izoh",
+    promo: "Promo-kod",
+    discount: "Chegirma"
   };
 
   const message = `
@@ -25,9 +26,9 @@ export const sendOrderToTelegram = async (order: OrderData) => {
 ${order.comment || "Izoh qoldirilmagan"}
 
 <b>🛒 ${l.items}:</b>
-// Fix: Access product name via translations.uz.name because the 'name' property does not exist directly on the Product type
 ${order.items.map(item => `• ${item.product.translations.uz.name} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} so'm`).join('\n')}
 
+${order.appliedPromo ? `<b>🏷 ${l.promo}:</b> ${order.appliedPromo.toUpperCase()}\n<b>📉 ${l.discount}:</b> ${order.discountAmount?.toLocaleString()} so'm\n` : ''}
 <b>💰 ${l.total}:</b> ${order.totalPrice.toLocaleString()} so'm
   `.trim();
 

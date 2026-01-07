@@ -15,13 +15,13 @@ export interface ProductDiscount {
   end_date: string;
 }
 
-export interface ProductPromoCode {
+export interface GlobalPromoCode {
+  id: string;
   code: string;
   type: 'PERCENT' | 'FIXED';
   value: number;
-  start_date: string;
-  end_date: string;
-  usage_limit: number;
+  expiry_date: string;
+  is_active: boolean;
 }
 
 export interface Product {
@@ -31,12 +31,11 @@ export interface Product {
   currency: string;
   translations: Record<Language, LocalizedProductInfo>;
   discount?: ProductDiscount;
-  promo_code?: ProductPromoCode;
   stock: number;
   is_active: boolean;
   created_at: string;
-  image: string; // Added image back as it's needed for the UI
-  category: LocalizedString; // Kept category for UI grouping
+  image: string;
+  category: LocalizedString;
 }
 
 export interface CompanyInfo {
@@ -53,6 +52,7 @@ export interface CompanyInfo {
 export interface Database {
   companyInfo: CompanyInfo;
   products: Product[];
+  promoCodes: GlobalPromoCode[];
   about: {
     title: LocalizedString;
     content: LocalizedString;
@@ -72,4 +72,5 @@ export interface OrderData {
   totalPrice: number;
   language: Language;
   appliedPromo?: string;
+  discountAmount?: number;
 }

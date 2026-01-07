@@ -3,23 +3,26 @@ import React, { useState, useEffect, useContext } from 'react';
 import { 
   LayoutDashboard, Package, Building2, Info, LogOut, 
   Plus, Edit, Trash2, Save, X, Image as ImageIcon,
-  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity
+  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket
 } from 'lucide-react';
 import { LanguageContext } from '../App';
-import { Product, CompanyInfo, Database, Language } from '../types';
+import { Product, CompanyInfo, Database, Language, GlobalPromoCode } from '../types';
 import { loginAdmin, logoutAdmin, isAdminAuthenticated } from '../services/auth';
 
 export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (newDb: Database) => void }) {
   const { lang, t, showToast } = useContext(LanguageContext);
   const [isAuthenticated, setIsAuthenticated] = useState(isAdminAuthenticated());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'company' | 'about'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promos' | 'company' | 'about'>('dashboard');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  
+  const [editingPromo, setEditingPromo] = useState<GlobalPromoCode | null>(null);
+  const [isAddingPromo, setIsAddingPromo] = useState(false);
 
   if (!isAuthenticated) {
     const handleLogin = async (e: React.FormEvent) => {
@@ -79,15 +82,30 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
   const handleSaveProduct = (product: Product) => {
     const newProducts = [...db.products];
     const index = newProducts.findIndex(p => p.id === product.id);
-    if (index > -1) {
-      newProducts[index] = product;
-    } else {
-      newProducts.push(product);
-    }
+    if (index > -1) newProducts[index] = product;
+    else newProducts.push(product);
     onUpdate({ ...db, products: newProducts });
     setEditingProduct(null);
-    setIsAdding(false);
+    setIsAddingProduct(false);
     showToast("Mahsulot saqlandi");
+  };
+
+  const handleDeletePromo = (id: string) => {
+    if (confirm("Ushbu promo-kodni o'chirmoqchimisiz?")) {
+      onUpdate({ ...db, promoCodes: db.promoCodes.filter(p => p.id !== id) });
+      showToast("Promo-kod o'chirildi");
+    }
+  };
+
+  const handleSavePromo = (promo: GlobalPromoCode) => {
+    const newPromos = [...db.promoCodes];
+    const index = newPromos.findIndex(p => p.id === promo.id);
+    if (index > -1) newPromos[index] = promo;
+    else newPromos.push(promo);
+    onUpdate({ ...db, promoCodes: newPromos });
+    setEditingPromo(null);
+    setIsAddingPromo(false);
+    showToast("Promo-kod saqlandi");
   };
 
   const createEmptyProduct = (): Product => ({
@@ -108,6 +126,15 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     category: { uz: '', ru: '', en: '', tr: '' }
   });
 
+  const createEmptyPromo = (): GlobalPromoCode => ({
+    id: Date.now().toString(),
+    code: '',
+    type: 'PERCENT',
+    value: 0,
+    expiry_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    is_active: true
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 min-h-screen flex flex-col lg:flex-row gap-10">
       <aside className="lg:w-72 space-y-4">
@@ -121,6 +148,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'products', label: 'Mahsulotlar', icon: Package },
+              { id: 'promos', label: 'Promo-kodlar', icon: Ticket },
               { id: 'company', label: 'Kompaniya', icon: Building2 },
               { id: 'about', label: 'Biz haqimizda', icon: Info },
             ].map(tab => (
@@ -142,7 +170,10 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
             <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
               <p className="text-[10px] font-black uppercase opacity-40 tracking-widest mb-2">Mahsulotlar</p>
               <h3 className="text-5xl font-black text-brand-mint">{db.products.length}</h3>
-              <p className="mt-4 text-sm font-bold opacity-60">Faol sotuvdagi sovunlar</p>
+            </div>
+            <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
+              <p className="text-[10px] font-black uppercase opacity-40 tracking-widest mb-2">Promo-kodlar</p>
+              <h3 className="text-5xl font-black text-brand-mint">{db.promoCodes.length}</h3>
             </div>
           </div>
         )}
@@ -151,11 +182,10 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-3xl font-black uppercase tracking-tight">Mahsulotlar Ro'yxati</h2>
-              <button onClick={() => { setIsAdding(true); setEditingProduct(createEmptyProduct()); }} className="flex items-center gap-2 px-6 py-3 gradient-mint text-white rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all text-xs">
+              <button onClick={() => { setIsAddingProduct(true); setEditingProduct(createEmptyProduct()); }} className="flex items-center gap-2 px-6 py-3 gradient-mint text-white rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all text-xs">
                 <Plus size={18} /> Qo'shish
               </button>
             </div>
-
             <div className="grid gap-4">
               {db.products.map(product => (
                 <div key={product.id} className="bg-white dark:bg-white/5 p-5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-md flex items-center gap-6 group hover:border-brand-mint/30 transition-all">
@@ -163,35 +193,62 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                   <div className="flex-1">
                     <h4 className="text-xl font-black">{product.translations.uz.name}</h4>
                     <p className="text-sm opacity-50 font-bold">{product.price.toLocaleString()} {product.currency}</p>
-                    <div className="flex gap-4 mt-1">
-                       <span className="text-[10px] font-black uppercase opacity-30">SKU: {product.sku}</span>
-                       <span className={`text-[10px] font-black uppercase ${product.stock > 0 ? 'text-brand-mint' : 'text-rose-500'}`}>Stock: {product.stock}</span>
-                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setEditingProduct(product)} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-xl hover:bg-brand-mint hover:text-white transition-all">
-                      <Edit size={18} />
-                    </button>
-                    <button onClick={() => handleDeleteProduct(product.id)} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
-                      <Trash2 size={18} />
-                    </button>
+                    <button onClick={() => setEditingProduct(product)} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={18} /></button>
+                    <button onClick={() => handleDeleteProduct(product.id)} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={18} /></button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {activeTab === 'promos' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-3xl font-black uppercase tracking-tight">Global Promo-kodlar</h2>
+              <button onClick={() => { setIsAddingPromo(true); setEditingPromo(createEmptyPromo()); }} className="flex items-center gap-2 px-6 py-3 gradient-mint text-white rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all text-xs">
+                <Plus size={18} /> Yangi Promo
+              </button>
+            </div>
+            <div className="grid gap-4">
+              {db.promoCodes.map(promo => (
+                <div key={promo.id} className="bg-white dark:bg-white/5 p-5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-md flex items-center gap-6 group hover:border-brand-mint/30 transition-all">
+                  <div className="w-14 h-14 bg-brand-mint/10 rounded-2xl flex items-center justify-center text-brand-mint">
+                    <Ticket size={24} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xl font-black uppercase tracking-widest">{promo.code}</h4>
+                    <p className="text-xs font-bold opacity-50">
+                      {promo.type === 'PERCENT' ? `${promo.value}%` : `${promo.value.toLocaleString()} UZS`} • 
+                      Amal qilish muddati: {new Date(promo.expiry_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingPromo(promo)} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={18} /></button>
+                    <button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={18} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Company & About Tabs UI... */}
       </main>
 
-      {(editingProduct || isAdding) && (
+      {/* Product Edit Modal (existing) */}
+      {(editingProduct || isAddingProduct) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
-          <div className="bg-white dark:bg-brand-dark w-full max-w-6xl p-8 md:p-10 rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh] space-y-8 border border-white/10">
+           {/* ... existing Product Modal UI ... */}
+           <div className="bg-white dark:bg-brand-dark w-full max-w-6xl p-8 md:p-10 rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh] space-y-8 border border-white/10">
             <div className="flex justify-between items-center">
-              <h3 className="text-3xl font-black uppercase">{isAdding ? "Yangi Mahsulot" : "Tahrirlash"}</h3>
-              <button onClick={() => { setEditingProduct(null); setIsAdding(false); }} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
+              <h3 className="text-3xl font-black uppercase">{isAddingProduct ? "Yangi Mahsulot" : "Tahrirlash"}</h3>
+              <button onClick={() => { setEditingProduct(null); setIsAddingProduct(false); }} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
             </div>
-
-            <div className="grid md:grid-cols-4 gap-8">
+            {/* Form Fields for Product */}
+            <div className="grid md:grid-cols-3 gap-8">
               <div className="space-y-4">
                 <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Asosiy</p>
                 <div className="space-y-2">
@@ -203,69 +260,75 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                   <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.price} onChange={e => setEditingProduct({...editingProduct!, price: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Valyuta</label>
-                  <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.currency} onChange={e => setEditingProduct({...editingProduct!, currency: e.target.value})} />
+                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Stock</label>
+                   <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.stock} onChange={e => setEditingProduct({...editingProduct!, stock: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Stock</label>
-                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.stock} onChange={e => setEditingProduct({...editingProduct!, stock: Number(e.target.value)})} />
-                </div>
-                <div className="flex items-center gap-3 pt-4">
-                   <input type="checkbox" checked={editingProduct?.is_active} onChange={e => setEditingProduct({...editingProduct!, is_active: e.target.checked})} className="w-5 h-5 accent-brand-mint" />
-                   <span className="font-black text-xs uppercase opacity-40">Faol mahsulot</span>
+                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Rasm URL</label>
+                   <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.image} onChange={e => setEditingProduct({...editingProduct!, image: e.target.value})} />
                 </div>
               </div>
-
-              <div className="space-y-4">
-                <p className="font-black text-xs uppercase opacity-30 border-b pb-2 text-rose-500">Discount</p>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Type</label>
-                   <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.type || 'PERCENT'} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { value: 0, start_date: '', end_date: '' }), type: e.target.value as any }})}>
-                      <option value="PERCENT">PERCENT</option>
-                      <option value="FIXED">FIXED</option>
-                   </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Value</label>
-                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.value || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { type: 'PERCENT', start_date: '', end_date: '' }), value: Number(e.target.value) }})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Start Date</label>
-                  <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.start_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { type: 'PERCENT', value: 0, end_date: '' }), start_date: e.target.value }})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">End Date</label>
-                  <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.end_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { type: 'PERCENT', value: 0, start_date: '' }), end_date: e.target.value }})} />
+              <div className="space-y-4 md:col-span-2">
+                <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Tarjimalar</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                   {(['uz', 'ru', 'en', 'tr'] as Language[]).map(l => (
+                    <div key={l} className="space-y-2 border-l-2 border-brand-mint/20 pl-4 py-1">
+                      <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Name</label>
+                      <input className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold mb-2" value={editingProduct?.translations[l].name} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], name: e.target.value } }})} />
+                    </div>
+                  ))}
                 </div>
               </div>
+            </div>
+            <button onClick={() => handleSaveProduct(editingProduct!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 mt-8">
+              <Save size={20} /> Mahsulotni saqlash
+            </button>
+           </div>
+        </div>
+      )}
 
-              <div className="space-y-4">
-                <p className="font-black text-xs uppercase opacity-30 border-b pb-2 text-brand-mint">Promo Code</p>
+      {/* Global Promo Edit Modal */}
+      {(editingPromo || isAddingPromo) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
+          <div className="bg-white dark:bg-brand-dark w-full max-w-md p-8 rounded-[3rem] shadow-2xl border border-white/10 space-y-8">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-black uppercase">{isAddingPromo ? "Yangi Promo" : "Tahrirlash"}</h3>
+              <button onClick={() => { setEditingPromo(null); setIsAddingPromo(false); }} className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase opacity-40 ml-2">KOD (Masalan: SIMOSH20)</label>
+                <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest" value={editingPromo?.code} onChange={e => setEditingPromo({...editingPromo!, code: e.target.value.toUpperCase()})} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Code</label>
-                  <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase" value={editingProduct?.promo_code?.code || ''} onChange={e => setEditingProduct({...editingProduct!, promo_code: { ...(editingProduct!.promo_code || { type: 'FIXED', value: 0, start_date: '', end_date: '', usage_limit: 0 }), code: e.target.value.toUpperCase() }})} />
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Turi</label>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.type} onChange={e => setEditingPromo({...editingPromo!, type: e.target.value as any})}>
+                    <option value="PERCENT">Foiz (%)</option>
+                    <option value="FIXED">Summa (UZS)</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Value</label>
-                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.promo_code?.value || ''} onChange={e => setEditingProduct({...editingProduct!, promo_code: { ...(editingProduct!.promo_code || { type: 'FIXED', code: '', start_date: '', end_date: '', usage_limit: 0 }), value: Number(e.target.value) }})} />
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Qiymat</label>
+                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.value} onChange={e => setEditingPromo({...editingPromo!, value: Number(e.target.value)})} />
                 </div>
               </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase opacity-40 ml-2">Amal qilish muddati</label>
+                <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.expiry_date?.split('T')[0]} onChange={e => setEditingPromo({...editingPromo!, expiry_date: new Date(e.target.value).toISOString()})} />
+              </div>
 
-              <div className="space-y-4">
-                <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Translations (UZ Example)</p>
-                 {(['uz', 'ru', 'en', 'tr'] as Language[]).map(l => (
-                  <div key={l} className="space-y-2 border-l-2 border-brand-mint/20 pl-4 py-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Name</label>
-                    <input className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold mb-2" value={editingProduct?.translations[l].name} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], name: e.target.value } }})} />
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Desc</label>
-                    <textarea className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold h-20" value={editingProduct?.translations[l].description} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], description: e.target.value } }})} />
-                  </div>
-                ))}
+              <div className="flex items-center gap-3 pt-4">
+                <input type="checkbox" checked={editingPromo?.is_active} onChange={e => setEditingPromo({...editingPromo!, is_active: e.target.checked})} className="w-5 h-5 accent-brand-mint rounded" />
+                <span className="font-black text-xs uppercase opacity-40">Faol kod</span>
               </div>
             </div>
 
-            <button onClick={() => handleSaveProduct(editingProduct!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 mt-8">
-              <Save size={20} /> Saqlash
+            <button onClick={() => handleSavePromo(editingPromo!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
+              <Save size={20} /> Promo-kodni saqlash
             </button>
           </div>
         </div>

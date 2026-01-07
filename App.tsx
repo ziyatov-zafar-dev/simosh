@@ -3,10 +3,10 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar
+  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar, AlertCircle
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
-import { Product, Language, Database, CompanyInfo } from './types';
+import { Product, Language, Database, CompanyInfo, GlobalPromoCode } from './types';
 import { translations } from './locales';
 import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram';
 import SimoshAI from './components/SimoshAI';
@@ -29,9 +29,13 @@ export const LanguageContext = createContext<{
 });
 
 const isDateActive = (start?: string, end?: string) => {
-  if (!start || !end) return false;
   const now = new Date();
-  return now >= new Date(start) && now <= new Date(end);
+  const startDate = start ? new Date(start) : null;
+  const endDate = end ? new Date(end) : null;
+  
+  if (startDate && now < startDate) return false;
+  if (endDate && now > endDate) return false;
+  return true;
 };
 
 const getEffectivePrice = (product: Product) => {
@@ -51,7 +55,6 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
   const [quantity, setQuantity] = useState(1);
 
   const activeDiscount = product.discount && isDateActive(product.discount.start_date, product.discount.end_date);
-  const activePromo = product.promo_code && isDateActive(product.promo_code.start_date, product.promo_code.end_date);
   const effectivePrice = getEffectivePrice(product);
 
   const handleAddClick = () => {
@@ -81,12 +84,6 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
         </div>
         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
-        {activePromo && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-brand-mint/10 rounded-xl text-brand-mint text-[10px] font-black uppercase tracking-wider w-fit">
-            <Tag size={12} /> {product.promo_code?.code}
-          </div>
-        )}
-
         <div className="pt-2 md:pt-4 min-h-[70px] md:min-h-[80px]">
           {!isConfiguring ? (
             <div className="flex items-center justify-between">
@@ -412,7 +409,7 @@ export default function App() {
               } />
 
               <Route path="/contact" element={<ContactPage companyInfo={db.companyInfo} />} />
-              <Route path="/cart" element={<CartPage cart={cart} setCart={setCart} onUpdateQty={updateCartQuantity} />} />
+              <Route path="/cart" element={<CartPage cart={cart} setCart={setCart} onUpdateQty={updateCartQuantity} promoCodes={db.promoCodes} />} />
               <Route path="/admin" element={<AdminPanel db={db} onUpdate={setDb} />} />
             </Routes>
           </main>
@@ -484,14 +481,50 @@ const ContactPage = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
   );
 };
 
-const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
+const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
   const { t, lang, showToast } = useContext(LanguageContext);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
   
-  const total = cart.reduce((s: number, i: any) => s + getEffectivePrice(i.product) * i.quantity, 0);
+  // Promo code states
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<GlobalPromoCode | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const subtotal = cart.reduce((s: number, i: any) => s + getEffectivePrice(i.product) * i.quantity, 0);
+  
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    if (appliedPromo.type === 'PERCENT') {
+      return (subtotal * appliedPromo.value) / 100;
+    }
+    return appliedPromo.value;
+  };
+
+  const total = Math.max(0, subtotal - calculateDiscount());
+
+  const handleApplyPromo = () => {
+    setPromoError(null);
+    const code = promoCodes.find((p: GlobalPromoCode) => p.code.toUpperCase() === promoInput.toUpperCase());
+    
+    if (!code) {
+      setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas" : "Promo code not found");
+      setAppliedPromo(null);
+      return;
+    }
+
+    const isExpired = new Date() > new Date(code.expiry_date);
+    if (!code.is_active || isExpired) {
+      setPromoError(lang === 'uz' ? "Promo-kod muddati o'tgan yoki faol emas" : "Promo code expired or inactive");
+      setAppliedPromo(null);
+      return;
+    }
+
+    setAppliedPromo(code);
+    showToast(lang === 'uz' ? "Promo-kod muvaffaqiyatli qo'llanildi!" : "Promo code applied successfully!");
+  };
 
   const handleCheckout = async () => {
     const success = await sendOrderToTelegram({
@@ -501,7 +534,9 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
       comment,
       items: cart,
       totalPrice: total,
-      language: lang
+      language: lang,
+      appliedPromo: appliedPromo?.code,
+      discountAmount: calculateDiscount()
     });
     if (success) {
       setCart([]);
@@ -533,17 +568,11 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
                   <h4 className="text-lg md:text-xl font-black leading-tight">{item.product.translations[lang].name}</h4>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
                     <div className="flex items-center bg-gray-100 dark:bg-white/10 rounded-lg md:rounded-xl p-1 w-fit">
-                      <button 
-                        onClick={() => onUpdateQty(item.product.id, -1)}
-                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
-                      >
+                      <button onClick={() => onUpdateQty(item.product.id, -1)} className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white">
                         <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       </button>
                       <span className="w-8 md:w-10 text-center font-black text-sm md:text-base">{item.quantity}</span>
-                      <button 
-                        onClick={() => onUpdateQty(item.product.id, 1)}
-                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
-                      >
+                      <button onClick={() => onUpdateQty(item.product.id, 1)} className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white">
                         <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       </button>
                     </div>
@@ -557,9 +586,62 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
             );
           })}
         </div>
-        <div className="pt-6 md:pt-8 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
-           <span className="text-lg md:text-xl font-bold opacity-40">{t.cart.total}:</span>
-           <span className="text-2xl md:text-4xl font-black text-brand-mint">{total.toLocaleString()} <span className="text-xs md:text-sm">{cart[0]?.product.currency}</span></span>
+
+        {/* Promo Code Input Section */}
+        <div className="bg-white dark:bg-white/5 p-5 md:p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
+          <label className="text-xs font-black uppercase opacity-40 ml-2">Promo-kod</label>
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <input 
+                value={promoInput} 
+                onChange={e => setPromoInput(e.target.value)} 
+                className={`w-full p-4 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest border transition-all ${promoError ? 'border-rose-500 bg-rose-50 dark:bg-rose-500/5' : 'border-transparent focus:border-brand-mint'}`} 
+                placeholder="PROMO2025" 
+              />
+              {promoError && (
+                <div className="absolute -bottom-6 left-2 flex items-center gap-1 text-[10px] text-rose-500 font-bold">
+                  <AlertCircle size={10} /> {promoError}
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={handleApplyPromo}
+              className="px-6 py-4 gradient-mint text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0"
+            >
+              {lang === 'uz' ? "Qo'llash" : "Apply"}
+            </button>
+          </div>
+          {appliedPromo && (
+            <div className="flex items-center justify-between p-3 bg-brand-mint/10 rounded-xl border border-brand-mint/20 text-brand-mint animate-in zoom-in duration-300">
+               <div className="flex items-center gap-2">
+                 <Tag size={16} />
+                 <span className="text-sm font-black uppercase tracking-widest">{appliedPromo.code}</span>
+               </div>
+               <div className="flex items-center gap-3">
+                 <span className="text-xs font-bold">-{appliedPromo.type === 'PERCENT' ? `${appliedPromo.value}%` : `${appliedPromo.value.toLocaleString()} so'm`}</span>
+                 <button onClick={() => { setAppliedPromo(null); setPromoInput(''); }} className="hover:text-rose-500 transition-colors">
+                   <X size={16} />
+                 </button>
+               </div>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-6 md:pt-8 space-y-4">
+           <div className="flex justify-between items-center text-sm font-bold opacity-40">
+             <span>Summa:</span>
+             <span>{subtotal.toLocaleString()} {cart[0]?.product.currency}</span>
+           </div>
+           {appliedPromo && (
+             <div className="flex justify-between items-center text-sm font-bold text-rose-500">
+               <span>Promo-kod chegirmasi:</span>
+               <span>-{calculateDiscount().toLocaleString()} {cart[0]?.product.currency}</span>
+             </div>
+           )}
+           <div className="flex justify-between items-center border-t border-gray-200 dark:border-white/10 pt-4">
+              <span className="text-lg md:text-xl font-bold">{t.cart.total}:</span>
+              <span className="text-2xl md:text-4xl font-black text-brand-mint">{total.toLocaleString()} <span className="text-xs md:text-sm">{cart[0]?.product.currency}</span></span>
+           </div>
         </div>
       </div>
 
