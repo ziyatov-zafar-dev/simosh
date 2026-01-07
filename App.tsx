@@ -3,7 +3,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle
+  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
 import { Product, Language } from './types';
@@ -39,7 +39,7 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
   };
 
   return (
-    <div className="product-card bg-white dark:bg-white/5 p-5 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden">
+    <div className="product-card bg-white dark:bg-white/5 p-5 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden flex flex-col h-full">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] mb-6">
         <img src={product.image} className="w-full h-full object-cover" alt={product.name[lang]} />
         <div className="absolute top-4 left-4 bg-white/90 dark:bg-brand-dark/90 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
@@ -47,13 +47,13 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
         </div>
       </div>
       
-      <div className="px-2 space-y-4">
+      <div className="px-2 space-y-4 flex-1 flex flex-col">
         <h3 className="text-2xl font-black">{product.name[lang]}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{product.description[lang]}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.description[lang]}</p>
         
-        <div className="flex items-center justify-between pt-4 min-h-[64px]">
+        <div className="pt-4 min-h-[80px]">
           {!isConfiguring ? (
-            <>
+            <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase opacity-40">Narxi</span>
                 <span className="text-2xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-xs uppercase">uzs</span></span>
@@ -64,29 +64,29 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
               >
                 <Plus size={24} />
               </button>
-            </>
+            </div>
           ) : (
-            <div className="w-full flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-2xl p-1">
+            <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-2xl p-1 border border-brand-mint/20">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white hover:text-brand-mint transition-colors"
                 >
                   <Minus size={18} />
                 </button>
                 <span className="text-xl font-black">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white hover:text-brand-mint transition-colors"
                 >
                   <Plus size={18} />
                 </button>
               </div>
               <button 
                 onClick={handleAddClick}
-                className="w-full py-3 gradient-mint text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full py-4 gradient-mint text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                {t.cart.add}
+                <ShoppingBag size={16} /> {t.cart.add}
               </button>
             </div>
           )}
@@ -178,6 +178,16 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const updateCartQuantity = (productId: string, delta: number) => {
+    setCart(prev => prev.map(item => {
+      if (item.product.id === productId) {
+        const newQty = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
+  };
+
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast: (m) => setToast(m) }}>
       <Router>
@@ -257,15 +267,15 @@ export default function App() {
               } />
 
               <Route path="/contact" element={<ContactPage />} />
-              <Route path="/cart" element={<CartPage cart={cart} setCart={setCart} />} />
+              <Route path="/cart" element={<CartPage cart={cart} setCart={setCart} onUpdateQty={updateCartQuantity} />} />
             </Routes>
           </main>
 
           {toast && (
             <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-10 duration-500 ease-out">
               <div className="bg-white/90 dark:bg-brand-dark/90 backdrop-blur-xl border border-brand-mint/30 px-10 py-4 rounded-full shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center gap-4 font-black">
-                <div className="w-8 h-8 gradient-mint rounded-full flex items-center justify-center text-white">
-                  <CheckCircle size={18} />
+                <div className="w-10 h-10 gradient-mint rounded-full flex items-center justify-center text-white shadow-lg animate-bounce">
+                  <CheckCircle size={20} />
                 </div>
                 <span className="text-brand-dark dark:text-white uppercase tracking-wider text-sm">{toast}</span>
               </div>
@@ -317,9 +327,9 @@ const ContactPage = () => {
          </div>
       </div>
       <form onSubmit={handleSubmit} className="bg-white dark:bg-white/5 p-10 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 space-y-6">
-        <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold" placeholder={t.contact.name} />
-        <input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold" placeholder={t.contact.phone} />
-        <textarea required value={form.message} onChange={e => setForm({...form, message: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold h-40" placeholder={t.contact.message} />
+        <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder={t.contact.name} />
+        <input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder={t.contact.phone} />
+        <textarea required value={form.message} onChange={e => setForm({...form, message: e.target.value})} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold h-40 text-brand-dark dark:text-white" placeholder={t.contact.message} />
         <button className="w-full py-5 gradient-mint text-white rounded-2xl font-black text-lg shadow-xl uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all">
           {t.contact.send}
         </button>
@@ -328,7 +338,7 @@ const ContactPage = () => {
   );
 };
 
-const CartPage = ({ cart, setCart }: any) => {
+const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
   const { t, lang, showToast } = useContext(LanguageContext);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -344,7 +354,7 @@ const CartPage = ({ cart, setCart }: any) => {
     });
     if (success) {
       setCart([]);
-      showToast(translations[lang].contact.success);
+      showToast("Buyurtmangiz qabul qilindi!");
     }
   };
 
@@ -364,14 +374,31 @@ const CartPage = ({ cart, setCart }: any) => {
         <h2 className="text-4xl font-black tracking-tight">{t.cart.title}</h2>
         <div className="space-y-4">
           {cart.map((item: any) => (
-            <div key={item.product.id} className="flex gap-6 items-center bg-white dark:bg-white/5 p-5 rounded-[2rem] shadow-sm border border-gray-100 dark:border-white/5">
+            <div key={item.product.id} className="flex gap-6 items-center bg-white dark:bg-white/5 p-5 rounded-[2rem] shadow-sm border border-gray-100 dark:border-white/5 group relative">
               <img src={item.product.image} className="w-24 h-24 rounded-2xl object-cover shadow-md" />
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <h4 className="text-xl font-black">{item.product.name[lang]}</h4>
-                <p className="text-brand-mint font-bold">{item.quantity} x {item.product.price.toLocaleString()} UZS</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-gray-100 dark:bg-white/10 rounded-xl p-1">
+                    <button 
+                      onClick={() => onUpdateQty(item.product.id, -1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-10 text-center font-black">{item.quantity}</span>
+                    <button 
+                      onClick={() => onUpdateQty(item.product.id, 1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <span className="text-brand-mint font-bold">{(item.product.price * item.quantity).toLocaleString()} UZS</span>
+                </div>
               </div>
-              <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-12 h-12 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
-                <X size={20} />
+              <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-10 h-10 flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors">
+                <Trash2 size={20} />
               </button>
             </div>
           ))}
@@ -388,8 +415,8 @@ const CartPage = ({ cart, setCart }: any) => {
           <p className="text-sm opacity-50 font-bold">Ma'lumotlaringizni to'ldiring, biz siz bilan bog'lanamiz.</p>
         </div>
         <div className="space-y-4">
-          <input value={name} onChange={e => setName(e.target.value)} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold" placeholder="F.I.SH" />
-          <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold" placeholder="+998" />
+          <input value={name} onChange={e => setName(e.target.value)} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="F.I.SH" />
+          <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="+998" />
         </div>
         <button 
           onClick={handleCheckout}
