@@ -1,28 +1,38 @@
 
 export type Language = 'uz' | 'ru' | 'en' | 'tr';
 
+export interface LocalizedString {
+  uz: string;
+  ru: string;
+  en: string;
+  tr: string;
+}
+
 export interface LocalizedProductInfo {
   name: string;
   description: string;
 }
 
-export type LocalizedString = Record<Language, string>;
-
 export interface ProductDiscount {
   type: 'PERCENT' | 'FIXED';
   value: number;
+  discountedPrice: number;
   start_date: string;
   end_date: string;
+  active: boolean;
 }
 
-export interface GlobalPromoCode {
+export interface Product {
   id: string;
-  code: string;
-  type: 'PERCENT' | 'FIXED';
-  value: number;
-  min_amount: number;
-  expiry_date: string;
-  is_active: boolean;
+  sku: string;
+  translations: Record<Language, LocalizedProductInfo>;
+  price: number;
+  currency: string;
+  categoryId: number;
+  stock: number;
+  status: 'ACTIVE' | 'INACTIVE';
+  image: string;
+  discount?: ProductDiscount;
 }
 
 export interface Category {
@@ -30,18 +40,21 @@ export interface Category {
   name: LocalizedString;
 }
 
-export interface Product {
-  id: number;
-  sku: string;
-  price: number;
-  currency: string;
-  translations: Record<Language, LocalizedProductInfo>;
-  discount?: ProductDiscount;
-  stock: number;
-  is_active: boolean;
-  created_at: string;
-  image: string;
-  categoryId: number;
+export interface PromoCode {
+  id: string;
+  code: string;
+  description: string;
+  scope: 'ALL_PRODUCTS' | 'PRODUCT';
+  productId?: string;
+  discountType: 'PERCENT' | 'FIXED';
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimitTotal?: number;
+  usageLimitPerUser?: number;
+  startsAt: string;
+  endsAt: string;
+  status: 'ACTIVE' | 'EXPIRED' | 'INACTIVE';
 }
 
 export interface CompanyInfo {
@@ -54,8 +67,6 @@ export interface CompanyInfo {
   instagram: string;
   telegram: string;
 }
-
-export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 export interface OrderData {
   id: string;
@@ -71,25 +82,19 @@ export interface OrderData {
   language: Language;
   appliedPromo?: string;
   discountAmount?: number;
-  status: OrderStatus;
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
   createdAt: string;
 }
 
 export interface Database {
   companyInfo: CompanyInfo;
-  products: Product[];
   categories: Category[];
-  promoCodes: GlobalPromoCode[];
+  products: Product[];
+  promoCodes: PromoCode[];
   orders: OrderData[];
   about: {
     title: LocalizedString;
     content: LocalizedString;
     image: string;
   };
-}
-
-export interface AppConfig {
-  mongodbUri: string;
-  telegramBotToken: string;
-  chatIds: string[];
 }

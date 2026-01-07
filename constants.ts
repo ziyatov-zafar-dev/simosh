@@ -1,7 +1,7 @@
 
-import { Database, AppConfig } from './types';
+import { Database } from './types';
 
-export const APP_CONFIG: AppConfig = {
+export const APP_CONFIG = {
   mongodbUri: "mongodb://localhost:27017",
   telegramBotToken: "8557045477:AAHNSYjRcyRs8iRj1qnYXH9yp788v8o9aLk",
   chatIds: ["7882316826", "7571971490"]
@@ -9,21 +9,21 @@ export const APP_CONFIG: AppConfig = {
 
 export const INITIAL_DB: Database = {
   companyInfo: {
-    name: "Simosh Atelier",
+    name: "Simosh",
     logo: "https://img.icons8.com/ios-filled/100/10B981/leaf.png",
     description: {
-      uz: "Simosh — tabiatning eng sof moddalari va zamonaviy botanika ilmi uyg'unlashgan premium sovunlar atelyesi.",
-      ru: "Simosh — ателье премиального мыла, где чистейшие природные компоненты встречаются с современной ботанической наукой.",
-      en: "Simosh is a premium soap atelier where nature's purest elements meet modern botanical science.",
-      tr: "Simosh, doğanın en saf elementlerinin modern botanik bilimiyle buluştuğu premium bir sabun atölyesidir."
+      uz: "Simosh — tabiiy ingredientlar asosida tayyorlangan premium sovunlar atelyesi.",
+      ru: "Simosh — ателье премиального мыла на основе натуральных ингредиентов.",
+      en: "Simosh is a premium soap atelier made from natural ingredients.",
+      tr: "Simosh, doğal içeriklerden yapılmış premium bir sabun atölyesidir."
     },
     phone: "+998 90 000 00 00",
-    email: "info@simosh.uz",
+    email: "akbarovamohinur23@gmail.com",
     address: {
-      uz: "Toshkent shahri, Botanika bog'i majmuasi",
-      ru: "Город Ташкент, Комплекс Ботанического сада",
-      en: "Tashkent City, Botanical Garden Complex",
-      tr: "Taşkent Şehri, Botanik Bahçesi Kompleksi"
+      uz: "Toshkent shahri",
+      ru: "Город Ташкент",
+      en: "Tashkent City",
+      tr: "Taşkent Şehri"
     },
     instagram: "simosh_official",
     telegram: "simosh_admin"
@@ -31,39 +31,62 @@ export const INITIAL_DB: Database = {
   categories: [
     {
       id: 1,
-      name: { uz: "Botanika", ru: "Ботаника", en: "Botanical", tr: "Botanik" }
+      name: { 
+        uz: "Botanika Sovunlari", 
+        ru: "Ботаническое мыло", 
+        en: "Botanical Soaps", 
+        tr: "Botanik Sabunlar" 
+      }
     }
   ],
   products: [
     {
-      id: 1,
-      sku: "SIM-001",
+      id: "prod-101",
+      sku: "SIM-LAV-01",
       translations: {
-        uz: { name: "Lavanda Shifosi", description: "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun." },
-        ru: { name: "Лавандовое Исцеление", description: "Натуральное мыло с успокаивающим маслом лаванды." },
-        en: { name: "Lavender Healing", description: "Natural soap with soothing lavender oil." },
-        tr: { name: "Lavanta Şifası", description: "Sakinleştirici lavanta yağı içeren doğal sabun." }
+        uz: { name: "Lavanda Premium", description: "Tabiiy lavanda moyi va tinchlantiruvchi ta'sir." },
+        ru: { name: "Лаванда Премиум", description: "Натуральное масло лаванды и успокаивающий эффект." },
+        en: { name: "Lavender Premium", description: "Natural lavender oil and soothing effect." },
+        tr: { name: "Lavanta Premium", description: "Doğal lavanta yağı ve sakinleştirici etki." }
       },
-      price: 45000,
+      price: 55000,
       currency: "UZS",
-      image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc",
       categoryId: 1,
-      stock: 50,
-      is_active: true,
-      created_at: new Date().toISOString()
+      stock: 100,
+      status: "ACTIVE",
+      image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc",
+      discount: {
+        type: "PERCENT",
+        value: 10,
+        discountedPrice: 49500,
+        start_date: "2024-01-01T00:00:00Z",
+        end_date: "2026-12-31T23:59:59Z",
+        active: true
+      }
     }
   ],
   promoCodes: [
-    { id: "1", code: "SIMOSH", type: "PERCENT", value: 10, min_amount: 10000, expiry_date: "2026-01-01", is_active: true }
+    {
+      id: "promo-1",
+      code: "SIMOSH10",
+      description: "Barcha mahsulotlarga 10% chegirma",
+      scope: "ALL_PRODUCTS",
+      discountType: "PERCENT",
+      discountValue: 10,
+      minOrderAmount: 100000,
+      startsAt: "2024-01-01T00:00:00Z",
+      endsAt: "2026-12-31T23:59:59Z",
+      status: "ACTIVE"
+    }
   ],
   orders: [],
   about: {
     title: { uz: "Biz haqimizda", ru: "О нас", en: "About Us", tr: "Hakkımızda" },
     content: { 
-      uz: "Biz 2023-yildan beri tabiiy go'zallik ustida ishlaymiz.", 
-      ru: "Мы работаем над естественной красотой с 2023 года.", 
-      en: "We have been working on natural beauty since 2023.", 
-      tr: "2023'ten beri doğal güzellik üzerine çalışıyoruz." 
+      uz: "Simosh kompaniyasi 2023-yilda tashkil etilgan. Bizning asosiy maqsadimiz — aholiga butunlay tabiiy va kimyoviy qo'shimchalarsiz sovunlarni taqdim etishdir.", 
+      ru: "Компания Simosh была основана в 2023 году. Наша главная цель — предоставить людям полностью натуральное мыло.", 
+      en: "Simosh was founded in 2023. Our main goal is to provide people with completely natural soaps.", 
+      tr: "Simosh 2023 yılında kuruldu. Temel amacımız tamamen doğal sabunlar sunmaktır." 
     },
     image: "https://images.unsplash.com/photo-1547793549-7038dd892c90"
   }

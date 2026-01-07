@@ -1,24 +1,19 @@
 
-import { Database, Product, Category, GlobalPromoCode, CompanyInfo, OrderData } from '../types';
+import { Database, Product, Category, PromoCode, CompanyInfo, OrderData } from '../types';
 import { INITIAL_DB, APP_CONFIG } from '../constants';
 
-const STORAGE_KEY = 'simosh_mongo_db';
+const STORAGE_KEY = 'simosh_mongo_db_persistence_v3';
 
-/**
- * MongoDB mantiqini simulyatsiya qiluvchi servis.
- * Ma'lumotlar localStorage'da saqlanadi, bu sahifa yangilanganda ham saqlanib qolishini ta'minlaydi.
- */
 export const loadDb = async (): Promise<Database> => {
-  console.log(`Ulanish: ${APP_CONFIG.mongodbUri}`);
+  console.log(`%cConnecting to MongoDB at: ${APP_CONFIG.mongodbUri}`, "color: #10B981; font-weight: bold;");
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      return { ...INITIAL_DB, ...JSON.parse(stored) };
     } catch (e) {
-      console.error("DB Parse xatosi:", e);
+      console.error("DB Parse error:", e);
     }
   }
-  // Agar ma'lumot bo'lmasa, dastlabki ma'lumotlarni yozib qo'yamiz
   await saveDb(INITIAL_DB);
   return INITIAL_DB;
 };
@@ -28,12 +23,9 @@ export const saveDb = async (db: Database): Promise<boolean> => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
     return true;
   } catch (error) {
-    console.error('DB saqlashda xatolik:', error);
     return false;
   }
 };
-
-// --- CRUD operatsiyalari ---
 
 export const addOrUpdateProduct = (db: Database, product: Product): Database => {
   const exists = db.products.find(p => p.id === product.id);
@@ -43,7 +35,7 @@ export const addOrUpdateProduct = (db: Database, product: Product): Database => 
   return { ...db, products: newProducts };
 };
 
-export const deleteProduct = (db: Database, id: number): Database => {
+export const deleteProduct = (db: Database, id: string): Database => {
   return { ...db, products: db.products.filter(p => p.id !== id) };
 };
 
@@ -59,7 +51,7 @@ export const deleteCategory = (db: Database, id: number): Database => {
   return { ...db, categories: db.categories.filter(c => c.id !== id) };
 };
 
-export const addOrUpdatePromo = (db: Database, promo: GlobalPromoCode): Database => {
+export const addOrUpdatePromo = (db: Database, promo: PromoCode): Database => {
   const exists = db.promoCodes.find(p => p.id === promo.id);
   const newPromos = exists
     ? db.promoCodes.map(p => p.id === promo.id ? promo : p)
@@ -72,6 +64,7 @@ export const deletePromo = (db: Database, id: string): Database => {
 };
 
 export const updateCompany = (db: Database, info: CompanyInfo): Database => ({ ...db, companyInfo: info });
+
 export const updateOrderStatus = (db: Database, orderId: string, status: OrderData['status']): Database => {
   return { ...db, orders: db.orders.map(o => o.id === orderId ? { ...o, status } : o) };
 };

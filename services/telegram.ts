@@ -33,6 +33,18 @@ export const sendContactToTelegram = async (contact: { name: string, phone: stri
   return sendMessage(text);
 };
 
+export const sendResetRequestToTelegram = async (email: string) => {
+  const text = `
+<b>⚠️ ADMIN PAROLINI TIKLASH SO'ROVI</b>
+━━━━━━━━━━━━━━━━━━
+<b>📧 Email:</b> ${email}
+<b>⏰ Vaqt:</b> ${new Date().toLocaleString('uz-UZ')}
+<b>ℹ️ Holat:</b> Foydalanuvchi parolni unutganligini bildirdi.
+  `.trim();
+
+  return sendMessage(text);
+};
+
 async function sendMessage(text: string) {
   try {
     const results = await Promise.all(
