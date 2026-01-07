@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simosh — Botanical Atelier</title>
+    <title>Simosh — Premium Botanical Atelier</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,72 +15,58 @@
         theme: {
           extend: {
             colors: {
-              // Custom Luxury Palette: 
-              // Light: A warm, bright "Linen Pearl" (not pure white)
-              // Dark: A deep "Mineral Charcoal" (not pure black)
+              // Non-white Light: "Oatmeal Pearl"
+              // Non-black Dark: "Midnight Forest"
               atelier: {
-                50: '#FDF9F3', // Lightest - Linen
-                100: '#F7F1E6',
-                200: '#E9DEC9',
-                300: '#D5C1A2',
-                400: '#B89D7A',
-                500: '#9B7C57',
-                900: '#1E2022', // Deep Slate
-                950: '#141618', // Mineral Base
-              },
-              accent: {
-                400: '#5EEAD4',
-                500: '#14B8A6',
-                600: '#0D9488',
+                light: '#F2F2EB', 
+                dark: '#0D1410',
+                accent: '#3D5A45',
+                gold: '#C5A059',
+                paper: '#E8E8DF',
+                ink: '#1A2B1E'
               }
             },
             fontFamily: {
               sans: ['"Outfit"', 'sans-serif'],
               serif: ['"Cormorant Garamond"', 'serif'],
+            },
+            animation: {
+              'reveal': 'reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              reveal: {
+                '0%': { transform: 'translateY(100%)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
             }
           }
         }
       }
     </script>
     <style>
-        * {
-          transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease;
-        }
         body {
+            background-color: #F2F2EB;
+            color: #1A2B1E;
             font-family: 'Outfit', sans-serif;
-            scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
-        .glass-nav {
-          background: rgba(253, 249, 243, 0.75);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
+        .dark body {
+            background-color: #0D1410;
+            color: #F2F2EB;
         }
-        .dark .glass-nav {
-          background: rgba(20, 22, 24, 0.75);
+        .serif-italic { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+        .glass-premium {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .luxury-card {
-          background: #ffffff;
-          border: 1px solid rgba(0,0,0,0.03);
-        }
-        .dark .luxury-card {
-          background: #1E2022;
-          border: 1px solid rgba(255,255,255,0.05);
-        }
-        ::selection {
-          background: #14B8A6;
-          color: white;
-        }
-        ::-webkit-scrollbar {
-          width: 5px;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #9B7C57;
-          border-radius: 10px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-          background: #14B8A6;
-        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #3D5A45; border-radius: 10px; }
     </style>
 <script type="importmap">
 {
@@ -97,7 +83,7 @@
 }
 </script>
 </head>
-<body class="bg-atelier-50 dark:bg-atelier-950 text-atelier-900 dark:text-atelier-50 selection:bg-accent-500/20">
+<body class="transition-colors duration-700">
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
 </body>
