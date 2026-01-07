@@ -24,6 +24,11 @@ export interface GlobalPromoCode {
   is_active: boolean;
 }
 
+export interface Category {
+  id: string;
+  name: LocalizedString;
+}
+
 export interface Product {
   id: number;
   sku: string;
@@ -35,7 +40,7 @@ export interface Product {
   is_active: boolean;
   created_at: string;
   image: string;
-  category: LocalizedString;
+  categoryId: string;
 }
 
 export interface CompanyInfo {
@@ -52,6 +57,7 @@ export interface CompanyInfo {
 export interface Database {
   companyInfo: CompanyInfo;
   products: Product[];
+  categories: Category[];
   promoCodes: GlobalPromoCode[];
   about: {
     title: LocalizedString;

@@ -6,7 +6,7 @@ import {
   Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar, AlertCircle
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
-import { Product, Language, Database, CompanyInfo, GlobalPromoCode } from './types';
+import { Product, Language, Database, CompanyInfo, GlobalPromoCode, Category } from './types';
 import { translations } from './locales';
 import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram';
 import SimoshAI from './components/SimoshAI';
@@ -49,13 +49,14 @@ const getEffectivePrice = (product: Product) => {
   return product.price;
 };
 
-const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product, q: number) => void }) => {
+const ProductCard = ({ product, categories, onAdd }: { product: Product, categories: Category[], onAdd: (p: Product, q: number) => void }) => {
   const { lang, t } = useContext(LanguageContext);
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   const activeDiscount = product.discount && isDateActive(product.discount.start_date, product.discount.end_date);
   const effectivePrice = getEffectivePrice(product);
+  const categoryName = categories.find(c => c.id === product.categoryId)?.name[lang] || "---";
 
   const handleAddClick = () => {
     onAdd(product, quantity);
@@ -68,10 +69,10 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
       <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] md:rounded-[2rem] mb-4 md:mb-6">
         <img src={product.image} className="w-full h-full object-cover" alt={product.translations[lang].name} />
         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-white/90 dark:bg-brand-dark/90 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg">
-          {product.category[lang]}
+          {categoryName}
         </div>
         {activeDiscount && (
-          <div className="absolute top-3 right-3 md:top-4 md:left-4 bg-rose-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
+          <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-rose-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
             {product.discount?.type === 'PERCENT' ? `-${product.discount?.value}%` : 'SALE'}
           </div>
         )}
@@ -264,12 +265,13 @@ export default function App() {
     
     try {
       const parsed = JSON.parse(saved);
-      // Migration: Ensure promoCodes exists
+      // Robust Migration: Always ensure default keys exist and have content if needed
       return {
         ...INITIAL_DB,
         ...parsed,
-        promoCodes: parsed.promoCodes || INITIAL_DB.promoCodes,
-        products: parsed.products || INITIAL_DB.products
+        categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : INITIAL_DB.categories,
+        promoCodes: (parsed.promoCodes && parsed.promoCodes.length > 0) ? parsed.promoCodes : INITIAL_DB.promoCodes,
+        products: (parsed.products && parsed.products.length > 0) ? parsed.products : INITIAL_DB.products
       };
     } catch (e) {
       return INITIAL_DB;
@@ -395,7 +397,7 @@ export default function App() {
                    </div>
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
                      {db.products.filter(p => p.is_active).map(p => (
-                       <ProductCard key={p.id} product={p} onAdd={addToCart} />
+                       <ProductCard key={p.id} product={p} categories={db.categories} onAdd={addToCart} />
                      ))}
                    </div>
                 </div>
@@ -523,8 +525,8 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     const inputCode = promoInput.trim().toUpperCase();
     if (!inputCode) return;
 
-    // Use current promoCodes from prop
-    const code = promoCodes.find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
+    // Direct match check on the provided promoCodes list
+    const code = (promoCodes || []).find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
     
     if (!code) {
       setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas!" : "Promo code not found!");

@@ -6,7 +6,7 @@ import {
   CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket
 } from 'lucide-react';
 import { LanguageContext } from '../App';
-import { Product, CompanyInfo, Database, Language, GlobalPromoCode } from '../types';
+import { Product, CompanyInfo, Database, Language, GlobalPromoCode, Category } from '../types';
 import { loginAdmin, logoutAdmin, isAdminAuthenticated } from '../services/auth';
 
 export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (newDb: Database) => void }) {
@@ -123,7 +123,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     is_active: true,
     created_at: new Date().toISOString(),
     image: '',
-    category: { uz: '', ru: '', en: '', tr: '' }
+    categoryId: db.categories[0]?.id || ''
   });
 
   const createEmptyPromo = (): GlobalPromoCode => ({
@@ -234,26 +234,29 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
             </div>
           </div>
         )}
-        
-        {/* Company & About Tabs UI... */}
       </main>
 
-      {/* Product Edit Modal (existing) */}
       {(editingProduct || isAddingProduct) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
-           {/* ... existing Product Modal UI ... */}
            <div className="bg-white dark:bg-brand-dark w-full max-w-6xl p-8 md:p-10 rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh] space-y-8 border border-white/10">
             <div className="flex justify-between items-center">
               <h3 className="text-3xl font-black uppercase">{isAddingProduct ? "Yangi Mahsulot" : "Tahrirlash"}</h3>
               <button onClick={() => { setEditingProduct(null); setIsAddingProduct(false); }} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
             </div>
-            {/* Form Fields for Product */}
             <div className="grid md:grid-cols-3 gap-8">
               <div className="space-y-4">
                 <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Asosiy</p>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">SKU</label>
                   <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.sku} onChange={e => setEditingProduct({...editingProduct!, sku: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Kategoriya</label>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.categoryId} onChange={e => setEditingProduct({...editingProduct!, categoryId: e.target.value})}>
+                    {db.categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name.uz}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Narx</label>
@@ -278,6 +281,30 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                     </div>
                   ))}
                 </div>
+                <div className="pt-4">
+                   <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Chegirma (Discount)</p>
+                   <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Turi</label>
+                        <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.type || 'PERCENT'} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { start_date: '', end_date: '', value: 0 }), type: e.target.value as any } })}>
+                          <option value="PERCENT">Foiz (%)</option>
+                          <option value="FIXED">Summa</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Qiymat</label>
+                        <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.value || 0} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { start_date: '', end_date: '', type: 'PERCENT' }), value: Number(e.target.value) } })} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Boshlanish</label>
+                        <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.start_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { value: 0, end_date: '', type: 'PERCENT' }), start_date: new Date(e.target.value).toISOString() } })} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Tugash</label>
+                        <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.end_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { value: 0, start_date: '', type: 'PERCENT' }), end_date: new Date(e.target.value).toISOString() } })} />
+                      </div>
+                   </div>
+                </div>
               </div>
             </div>
             <button onClick={() => handleSaveProduct(editingProduct!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 mt-8">
@@ -287,7 +314,6 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
         </div>
       )}
 
-      {/* Global Promo Edit Modal */}
       {(editingPromo || isAddingPromo) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
           <div className="bg-white dark:bg-brand-dark w-full max-w-md p-8 rounded-[3rem] shadow-2xl border border-white/10 space-y-8">
@@ -298,7 +324,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase opacity-40 ml-2">KOD (Masalan: SIMOSH20)</label>
+                <label className="text-[10px] font-black uppercase opacity-40 ml-2">KOD</label>
                 <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest" value={editingPromo?.code} onChange={e => setEditingPromo({...editingPromo!, code: e.target.value.toUpperCase()})} />
               </div>
               

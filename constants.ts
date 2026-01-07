@@ -22,6 +22,26 @@ export const INITIAL_DB: Database = {
     instagram: "simosh_atelier",
     telegram: "simosh_official"
   },
+  categories: [
+    {
+      id: "cat_1",
+      name: {
+        uz: "Botanika",
+        ru: "Ботаника",
+        en: "Botanical",
+        tr: "Botanik"
+      }
+    },
+    {
+      id: "cat_2",
+      name: {
+        uz: "Efirlar",
+        ru: "Эфиры",
+        en: "Ethers",
+        tr: "Eterler"
+      }
+    }
+  ],
   products: [
     {
       id: 101,
@@ -49,19 +69,14 @@ export const INITIAL_DB: Database = {
       discount: {
         type: "PERCENT",
         value: 15,
-        start_date: "2024-01-01T00:00:00Z",
-        end_date: "2026-12-31T23:59:59Z"
+        start_date: "2026-01-01T00:00:00Z",
+        end_date: "2026-01-31T23:59:59Z"
       },
       stock: 50,
       is_active: true,
       created_at: "2024-01-08T00:00:00Z",
       image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
-      category: {
-        uz: "Botanika",
-        ru: "Ботаника",
-        en: "Botanical",
-        tr: "Botanik"
-      }
+      categoryId: "cat_1"
     }
   ],
   promoCodes: [
@@ -70,15 +85,7 @@ export const INITIAL_DB: Database = {
       code: "SIMOSH2025",
       type: "PERCENT",
       value: 10,
-      expiry_date: "2025-12-31T23:59:59Z",
-      is_active: true
-    },
-    {
-      id: "2",
-      code: "YANGIYIL",
-      type: "FIXED",
-      value: 20000,
-      expiry_date: "2025-01-15T23:59:59Z",
+      expiry_date: "2026-12-31T23:59:59Z",
       is_active: true
     }
   ],
