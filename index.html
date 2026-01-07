@@ -4,45 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simosh — Premium Botanical Atelier</title>
+    <title>Simosh — Tabiiy Shifobaxsh Sovunlar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
             colors: {
-              // Non-white Light: "Oatmeal Pearl"
-              // Non-black Dark: "Midnight Forest"
-              atelier: {
-                light: '#F2F2EB', 
-                dark: '#0D1410',
-                accent: '#3D5A45',
-                gold: '#C5A059',
-                paper: '#E8E8DF',
-                ink: '#1A2B1E'
+              brand: {
+                light: '#F8FAFC', // Screenshotdagi och rang
+                dark: '#0B1120',  // Screenshotdagi to'q navy
+                mint: '#10B981',  // Zumrad yashil
+                accent: '#059669'
               }
             },
             fontFamily: {
               sans: ['"Outfit"', 'sans-serif'],
-              serif: ['"Cormorant Garamond"', 'serif'],
             },
-            animation: {
-              'reveal': 'reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards',
-              'float': 'float 6s ease-in-out infinite',
-            },
-            keyframes: {
-              reveal: {
-                '0%': { transform: 'translateY(100%)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-20px)' },
-              }
+            borderRadius: {
+              '4xl': '2rem',
+              '5xl': '3rem',
             }
           }
         }
@@ -50,23 +35,36 @@
     </script>
     <style>
         body {
-            background-color: #F2F2EB;
-            color: #1A2B1E;
             font-family: 'Outfit', sans-serif;
-            overflow-x: hidden;
+            background-color: #F8FAFC;
+            transition: background-color 0.5s ease;
         }
         .dark body {
-            background-color: #0D1410;
-            color: #F2F2EB;
+            background-color: #0B1120;
         }
-        .serif-italic { font-family: 'Cormorant Garamond', serif; font-style: italic; }
-        .glass-premium {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #3D5A45; border-radius: 10px; }
+        .dark .glass-nav {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .gradient-mint {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-pill-active {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white !important;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 10px; }
     </style>
 <script type="importmap">
 {
@@ -76,14 +74,12 @@
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "@google/genai": "https://esm.sh/@google/genai@1.3.0",
     "react-router-dom": "https://esm.sh/react-router-dom@7.1.0",
-    "lucide-react": "https://esm.sh/lucide-react@0.468.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "lucide-react": "https://esm.sh/lucide-react@0.468.0"
   }
 }
 </script>
 </head>
-<body class="transition-colors duration-700">
+<body class="transition-colors duration-500">
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
 </body>

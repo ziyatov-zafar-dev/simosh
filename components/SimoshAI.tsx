@@ -53,74 +53,25 @@ export default function SimoshAI({ products }: { products: Product[] }) {
   };
 
   return (
-    <div className="pt-40 pb-20 max-w-5xl mx-auto px-6 h-screen flex flex-col">
-      <div className="bg-atelier-accent p-10 rounded-t-[50px] flex items-center justify-between shadow-2xl">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-atelier-light rounded-2xl flex items-center justify-center text-atelier-accent">
-            <Sparkles size={32} />
+    <div className="max-w-4xl mx-auto px-6 h-[80vh] flex flex-col pt-10">
+      <div className="gradient-mint p-8 rounded-t-[3rem] flex items-center justify-between shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-mint shadow-lg">
+            <Sparkles size={24} />
           </div>
-          <div>
-            <h2 className="text-3xl font-black text-atelier-light serif-italic italic">Simosh AI</h2>
-            <p className="text-atelier-light/60 text-xs font-bold uppercase tracking-widest">Botanical Consultant</p>
+          <div className="text-white">
+            <h2 className="text-2xl font-black leading-none">Simosh AI</h2>
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mt-1">Sizning yordamchingiz</p>
           </div>
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 bg-atelier-paper dark:bg-atelier-dark/40 overflow-y-auto p-8 sm:p-12 space-y-10 border-x border-atelier-accent/5">
+      <div ref={scrollRef} className="flex-1 bg-white dark:bg-brand-dark/30 overflow-y-auto p-8 space-y-8 border-x border-gray-100 dark:border-white/5">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`flex gap-6 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-atelier-accent text-white' : 'bg-atelier-paper dark:bg-atelier-accent/20 text-atelier-accent'}`}>
-                {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+            <div className={`flex gap-4 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md ${msg.role === 'user' ? 'bg-brand-dark text-white' : 'bg-brand-mint text-white'}`}>
+                {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
               </div>
-              <div className={`space-y-4 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                <div className={`p-8 rounded-[32px] text-lg leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-atelier-accent text-white rounded-tr-none' : 'bg-white dark:bg-atelier-accent/10 border border-atelier-accent/5 rounded-tl-none font-serif'}`}>
-                  {msg.image && <img src={msg.image} className="w-full max-h-64 object-cover rounded-2xl mb-4 border border-atelier-accent/10" />}
-                  {msg.content}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex gap-4 items-center opacity-40 italic">
-            <Loader2 className="animate-spin" size={18} /> {t.ai.thinking}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-atelier-paper dark:bg-atelier-dark p-6 rounded-b-[50px] border border-atelier-accent/5 shadow-2xl">
-        <div className="relative flex items-center gap-4 bg-white dark:bg-atelier-accent/10 p-3 rounded-full border border-atelier-accent/10 shadow-inner">
-          <input type="file" ref={fileRef} className="hidden" accept="image/*" onChange={handleImage} />
-          <button onClick={() => fileRef.current?.click()} className="p-4 hover:bg-atelier-paper dark:hover:bg-atelier-dark rounded-full transition-all text-atelier-accent">
-            <Camera size={24} />
-          </button>
-          
-          <div className="flex-1 relative">
-            {selectedImage && (
-              <div className="absolute -top-20 left-0 animate-in zoom-in-75">
-                <img src={selectedImage} className="w-16 h-16 object-cover rounded-xl border-4 border-white shadow-xl" />
-                <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><X size={10} /></button>
-              </div>
-            )}
-            <input 
-              className="w-full bg-transparent px-4 py-3 outline-none font-bold text-lg" 
-              placeholder={t.ai.placeholder}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            />
-          </div>
-
-          <button 
-            onClick={handleSend}
-            disabled={loading || (!input && !selectedImage)}
-            className="bg-atelier-accent text-white p-4 rounded-full hover:scale-110 active:scale-95 transition-all shadow-xl disabled:opacity-20"
-          >
-            <Send size={24} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+              <div className={`p-6 rounded-[2rem] text-lg font-bold ${msg.role === 'user' ? 'bg-gray-100 dark:bg-white/10 text-brand-dark dark:text-white rounded-tr-none' : 'bg-brand-mint/10 text-brand-dark dark:text-white rounded-tl-none'}`}>
+                {msg.image && <img src={msg.image} className="w-full max-h-64 object-cover rounded-2xl mb-4

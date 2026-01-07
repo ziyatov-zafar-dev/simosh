@@ -31,69 +31,54 @@ export const LanguageContext = createContext<{
 const Navigation = ({ cartCount }: { cartCount: number }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const location = useLocation();
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const menuItems = [
+    { label: t.nav.home, path: '/' },
+    { label: t.nav.products, path: '/products' },
+    { label: t.nav.about, path: '/about' },
+    { label: t.nav.contact, path: '/contact' },
+    { label: t.nav.ai, path: '/ai' }
+  ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'py-4' : 'py-8'}`}>
-      <div className="max-w-7xl mx-auto px-6">
-        <div className={`flex items-center justify-between px-8 py-4 rounded-full transition-all duration-500 ${isScrolled ? 'bg-atelier-paper/80 dark:bg-atelier-dark/80 backdrop-blur-2xl shadow-2xl border border-atelier-accent/10' : 'bg-transparent'}`}>
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-atelier-accent rounded-full flex items-center justify-center text-atelier-light">
-              <Leaf size={20} />
-            </div>
-            <span className="text-2xl font-black tracking-tighter serif-italic">SIMOSH</span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: t.nav.home, path: '/' },
-              { label: t.nav.products, path: '/products' },
-              { label: t.nav.about, path: '/about' },
-              { label: t.nav.contact, path: '/contact' },
-              { label: t.nav.ai, path: '/ai', highlight: true }
-            ].map((item) => (
-              <Link 
-                key={item.path} 
-                to={item.path} 
-                className={`text-xs font-bold tracking-[0.2em] uppercase transition-all hover:text-atelier-gold ${location.pathname === item.path ? 'text-atelier-gold' : item.highlight ? 'text-atelier-accent' : ''}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+    <nav className="fixed top-6 left-0 w-full z-50 px-4">
+      <div className="max-w-6xl mx-auto glass-nav rounded-full shadow-2xl py-3 px-8 flex items-center justify-between border border-white/20 dark:border-white/5">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+             <img src="https://i.postimg.cc/mD83WqVq/simosh-logo.png" alt="Simosh" className="w-8 h-8 object-contain" onError={(e) => (e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/194/194206.png")} />
           </div>
+          <span className="text-2xl font-black tracking-tighter text-brand-dark dark:text-white">SIMOSH</span>
+        </Link>
 
-          <div className="flex items-center gap-5">
-            <button onClick={toggleTheme} className="p-2 hover:bg-atelier-paper dark:hover:bg-atelier-accent/20 rounded-full transition-colors">
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            
-            <div className="flex bg-atelier-paper dark:bg-atelier-accent/20 p-1 rounded-full">
-              {(['uz', 'ru', 'en'] as Language[]).map(l => (
-                <button 
-                  key={l}
-                  onClick={() => setLang(l)}
-                  className={`px-3 py-1 text-[10px] font-black rounded-full transition-all ${lang === l ? 'bg-atelier-accent text-white' : 'opacity-40'}`}
-                >
-                  {l.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
-            <Link to="/cart" className="relative p-2 bg-atelier-accent text-white rounded-full shadow-lg hover:scale-110 transition-transform">
-              <ShoppingBag size={18} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-atelier-gold text-atelier-dark text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-atelier-light dark:border-atelier-dark">
-                  {cartCount}
-                </span>
-              )}
+        <div className="hidden lg:flex items-center gap-1 bg-gray-100/50 dark:bg-white/5 p-1 rounded-full">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`px-6 py-2 rounded-full text-sm font-bold transition-all uppercase tracking-wider ${location.pathname === item.path ? 'nav-pill-active' : 'text-gray-600 dark:text-gray-300 hover:text-brand-mint'}`}
+            >
+              {item.label}
             </Link>
-          </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={toggleTheme} className="p-3 bg-gray-100/50 dark:bg-white/5 text-yellow-500 dark:text-yellow-400 rounded-full hover:scale-110 transition-transform">
+            {isDark ? <Sun size={20} /> : <Moon size={20} className="text-indigo-600" />}
+          </button>
+          
+          <button onClick={() => setLang(lang === 'uz' ? 'ru' : 'uz')} className="w-12 h-12 flex items-center justify-center bg-gray-100/50 dark:bg-white/5 rounded-full text-sm font-black text-brand-dark dark:text-white uppercase">
+            {lang}
+          </button>
+
+          <Link to="/cart" className="relative w-12 h-12 gradient-mint text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+            <ShoppingBag size={20} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-brand-dark dark:bg-white text-white dark:text-brand-dark text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-brand-dark">
+                {cartCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
     </nav>
@@ -103,26 +88,25 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
 const ProductCard = ({ product, addToCart }: { product: Product, addToCart: (p: Product) => void }) => {
   const { lang, t } = useContext(LanguageContext);
   return (
-    <div className="group relative bg-atelier-paper dark:bg-atelier-accent/10 rounded-[40px] overflow-hidden border border-atelier-accent/5 hover:border-atelier-accent/20 transition-all duration-700">
-      <div className="aspect-[4/5] overflow-hidden">
-        <img 
-          src={product.image} 
-          className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000" 
-          alt={product.name[lang]} 
-        />
-      </div>
-      <div className="p-8 space-y-4">
-        <div className="flex justify-between items-start">
-          <h3 className="text-2xl font-black serif-italic leading-none">{product.name[lang]}</h3>
-          <span className="text-xs font-black uppercase tracking-widest text-atelier-gold">{product.price.toLocaleString()} UZS</span>
+    <div className="group bg-white dark:bg-brand-dark/50 rounded-[2.5rem] p-4 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-white/5">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem]">
+        <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={product.name[lang]} />
+        <div className="absolute top-4 left-4 bg-white/90 dark:bg-brand-dark/90 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-mint">
+          {product.category[lang]}
         </div>
-        <p className="text-sm opacity-60 leading-relaxed line-clamp-2">{product.description[lang]}</p>
-        <button 
-          onClick={() => addToCart(product)}
-          className="w-full py-4 bg-atelier-accent text-atelier-light rounded-full text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-atelier-gold hover:text-atelier-dark transition-all"
-        >
-          <Plus size={16} /> {t.cart.add}
-        </button>
+      </div>
+      <div className="p-6 space-y-4">
+        <h3 className="text-2xl font-black text-brand-dark dark:text-white leading-none tracking-tight">{product.name[lang]}</h3>
+        <p className="text-gray-500 text-sm line-clamp-2">{product.description[lang]}</p>
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-xs uppercase">UZS</span></span>
+          <button 
+            onClick={() => addToCart(product)}
+            className="p-4 gradient-mint text-white rounded-2xl shadow-lg hover:scale-110 transition-transform"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -139,63 +123,61 @@ export default function App() {
     else document.documentElement.classList.remove('dark');
   }, [isDark]);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  };
-
   const addToCart = (product: Product) => {
     setCart(prev => {
       const existing = prev.find(i => i.product.id === product.id);
       if (existing) return prev.map(i => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { product, quantity: 1 }];
     });
-    showToast(translations[lang].cart.added);
+    setToast(translations[lang].cart.added);
+    setTimeout(() => setToast(null), 3000);
   };
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast }}>
+    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast: (m) => setToast(m) }}>
       <Router>
         <div className="min-h-screen">
           <Navigation cartCount={cart.reduce((a, b) => a + b.quantity, 0)} />
           
-          <main>
+          <main className="pt-32">
             <Routes>
               <Route path="/" element={
-                <div className="space-y-32 pb-32">
-                  {/* Hero Section */}
-                  <section className="relative h-screen flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 z-0">
-                      <img src="https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover opacity-30 scale-105 animate-float" />
-                      <div className="absolute inset-0 bg-gradient-to-b from-atelier-light via-transparent to-atelier-light dark:from-atelier-dark dark:to-atelier-dark" />
-                    </div>
-                    
-                    <div className="relative z-10 text-center max-w-4xl px-6 space-y-12">
-                      <h1 className="text-8xl md:text-[140px] font-black tracking-tighter serif-italic leading-[0.85] animate-reveal">
-                        {translations[lang].home.heroTitle}
+                <div className="pb-32 space-y-40">
+                  {/* Hero - Screenshotda ko'rsatilgan uslubda */}
+                  <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
+                    <div className="space-y-10">
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-mint/10 rounded-full text-brand-mint text-xs font-black uppercase tracking-widest">
+                        <Leaf size={14} /> 100% Organik Mahsulot
+                      </div>
+                      <h1 className="text-7xl md:text-9xl font-black tracking-tighter leading-[0.9] text-brand-dark dark:text-white">
+                        Tabiatning <br />
+                        <span className="text-gradient">Sof</span> <br />
+                        Mo'jizasi
                       </h1>
-                      <p className="text-xl md:text-2xl opacity-60 max-w-2xl mx-auto leading-relaxed">
-                        {translations[lang].home.heroSubtitle}
+                      <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
+                        Biz — tabiatdan ilhom olgan, inson salomatligini ustuvor biladigan tabiiy parvarish mahsulotlari ishlab chiqaruvchi kompaniyamiz.
                       </p>
-                      <Link to="/products" className="inline-flex items-center gap-4 bg-atelier-accent text-atelier-light px-12 py-6 rounded-full text-sm font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl">
-                        {translations[lang].home.viewProducts} <ArrowRight size={20} />
+                      <Link to="/products" className="inline-flex items-center gap-4 gradient-mint text-white px-10 py-5 rounded-full font-black text-lg shadow-2xl hover:scale-105 transition-all">
+                        Mahsulotlar <ArrowRight size={24} />
                       </Link>
+                    </div>
+                    <div className="relative">
+                       <div className="absolute -inset-10 bg-brand-mint/5 rounded-full blur-3xl" />
+                       <div className="relative bg-white dark:bg-white/5 p-8 rounded-[4rem] shadow-2xl overflow-hidden aspect-square flex items-center justify-center">
+                          <img src="https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover rounded-[3rem]" alt="Simosh Soap" />
+                       </div>
                     </div>
                   </section>
 
-                  {/* Featured Products */}
+                  {/* Mashhur mahsulotlar */}
                   <section className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-20">
-                      <div className="space-y-4">
-                        <h2 className="text-6xl font-black serif-italic">{translations[lang].home.popularTitle}</h2>
-                        <p className="opacity-50 text-xl">{translations[lang].home.popularSubtitle}</p>
-                      </div>
-                      <Link to="/products" className="group flex items-center gap-3 text-sm font-black uppercase tracking-widest hover:text-atelier-gold transition-all">
-                        {translations[lang].home.viewAll} <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
+                      <h2 className="text-5xl font-black text-brand-dark dark:text-white tracking-tight">Ommabop mahsulotlar</h2>
+                      <Link to="/products" className="text-brand-mint font-black uppercase tracking-widest flex items-center gap-2 hover:translate-x-2 transition-transform">
+                        Barchasi <ArrowRight size={20} />
                       </Link>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                       {INITIAL_DB.products.map(p => <ProductCard key={p.id} product={p} addToCart={addToCart} />)}
                     </div>
                   </section>
@@ -203,28 +185,33 @@ export default function App() {
               } />
 
               <Route path="/products" element={
-                <div className="pt-40 pb-32 max-w-7xl mx-auto px-6 space-y-20">
-                  <div className="text-center space-y-6">
-                    <h1 className="text-7xl font-black serif-italic">{translations[lang].nav.products}</h1>
-                    <p className="opacity-50 text-xl max-w-2xl mx-auto">Pure essence of nature captured in artisan soap blocks.</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                <div className="max-w-7xl mx-auto px-6 py-20">
+                  <h1 className="text-6xl font-black text-brand-dark dark:text-white mb-16 tracking-tight">Bizning to'plamlar</h1>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {INITIAL_DB.products.map(p => <ProductCard key={p.id} product={p} addToCart={addToCart} />)}
                   </div>
                 </div>
               } />
 
               <Route path="/ai" element={<SimoshAI products={INITIAL_DB.products} />} />
-
-              {/* Other routes omitted for brevity but they follow the same aesthetic */}
+              <Route path="/contact" element={
+                <div className="max-w-3xl mx-auto px-6 py-20">
+                  <h1 className="text-5xl font-black text-brand-dark dark:text-white mb-10">Bog'lanish</h1>
+                  <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                    <input className="w-full p-6 rounded-3xl bg-gray-100 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-lg" placeholder="Ismingiz" />
+                    <input className="w-full p-6 rounded-3xl bg-gray-100 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-lg" placeholder="Telefon raqamingiz" />
+                    <textarea className="w-full p-6 rounded-3xl bg-gray-100 dark:bg-white/5 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-lg h-40" placeholder="Xabaringiz"></textarea>
+                    <button className="w-full py-6 gradient-mint text-white rounded-3xl font-black text-xl shadow-xl">Yuborish</button>
+                  </form>
+                </div>
+              } />
             </Routes>
           </main>
 
-          {/* Toast Notification */}
           {toast && (
-            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-5">
-              <div className="bg-atelier-accent text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold">
-                <CheckCircle2 size={20} /> {toast}
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5">
+              <div className="gradient-mint text-white px-10 py-4 rounded-full shadow-2xl flex items-center gap-3 font-black uppercase tracking-widest text-xs">
+                <CheckCircle2 size={18} /> {toast}
               </div>
             </div>
           )}
