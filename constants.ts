@@ -111,4 +111,4 @@ export const INITIAL_DB: Database = {
 };
 
 export const TELEGRAM_BOT_TOKEN = "8557045477:AAHNSYjRcyRs8iRj1qnYXH9yp788v8o9aLk";
-export const CHAT_IDS = ["7882316826", "7571971490"];
+export const CHAT_IDS = ["7882316826"];

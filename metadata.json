@@ -1,7 +1,5 @@
 {
   "name": "Simosh — Premium Botanical Soap",
   "description": "Tabiiy va shifobaxsh sovunlar atelyesi.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }
