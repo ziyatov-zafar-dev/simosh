@@ -25,7 +25,8 @@ export const sendOrderToTelegram = async (order: OrderData) => {
 ${order.comment || "Izoh qoldirilmagan"}
 
 <b>🛒 ${l.items}:</b>
-${order.items.map(item => `• ${item.product.name.uz} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} so'm`).join('\n')}
+// Fix: Access product name via translations.uz.name because the 'name' property does not exist directly on the Product type
+${order.items.map(item => `• ${item.product.translations.uz.name} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} so'm`).join('\n')}
 
 <b>💰 ${l.total}:</b> ${order.totalPrice.toLocaleString()} so'm
   `.trim();

@@ -3,13 +3,14 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2
+  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
-import { Product, Language } from './types';
+import { Product, Language, Database, CompanyInfo } from './types';
 import { translations } from './locales';
 import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram';
 import SimoshAI from './components/SimoshAI';
+import AdminPanel from './components/AdminPanel';
 
 export const LanguageContext = createContext<{ 
   lang: Language, 
@@ -27,10 +28,31 @@ export const LanguageContext = createContext<{
   showToast: () => {}
 });
 
+const isDateActive = (start?: string, end?: string) => {
+  if (!start || !end) return false;
+  const now = new Date();
+  return now >= new Date(start) && now <= new Date(end);
+};
+
+const getEffectivePrice = (product: Product) => {
+  if (product.discount && isDateActive(product.discount.start_date, product.discount.end_date)) {
+    if (product.discount.type === 'PERCENT') {
+      return product.price * (1 - product.discount.value / 100);
+    } else {
+      return Math.max(0, product.price - product.discount.value);
+    }
+  }
+  return product.price;
+};
+
 const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product, q: number) => void }) => {
   const { lang, t } = useContext(LanguageContext);
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [quantity, setQuantity] = useState(1);
+
+  const activeDiscount = product.discount && isDateActive(product.discount.start_date, product.discount.end_date);
+  const activePromo = product.promo_code && isDateActive(product.promo_code.start_date, product.promo_code.end_date);
+  const effectivePrice = getEffectivePrice(product);
 
   const handleAddClick = () => {
     onAdd(product, quantity);
@@ -41,28 +63,49 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
   return (
     <div className="product-card bg-white dark:bg-white/5 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden flex flex-col h-full">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] md:rounded-[2rem] mb-4 md:mb-6">
-        <img src={product.image} className="w-full h-full object-cover" alt={product.name[lang]} />
+        <img src={product.image} className="w-full h-full object-cover" alt={product.translations[lang].name} />
         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-white/90 dark:bg-brand-dark/90 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg">
           {product.category[lang]}
         </div>
+        {activeDiscount && (
+          <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-rose-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
+            {product.discount?.type === 'PERCENT' ? `-${product.discount?.value}%` : 'SALE'}
+          </div>
+        )}
       </div>
       
       <div className="px-1 md:px-2 space-y-3 md:space-y-4 flex-1 flex flex-col">
-        <h3 className="text-xl md:text-2xl font-black leading-tight">{product.name[lang]}</h3>
-        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.description[lang]}</p>
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="text-xl md:text-2xl font-black leading-tight flex-1">{product.translations[lang].name}</h3>
+          <span className="text-[10px] opacity-30 font-bold font-mono">{product.sku}</span>
+        </div>
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
+        {activePromo && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-brand-mint/10 rounded-xl text-brand-mint text-[10px] font-black uppercase tracking-wider w-fit">
+            <Tag size={12} /> {product.promo_code?.code}
+          </div>
+        )}
+
         <div className="pt-2 md:pt-4 min-h-[70px] md:min-h-[80px]">
           {!isConfiguring ? (
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
-                <span className="text-xl md:text-2xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">uzs</span></span>
+                {activeDiscount ? (
+                  <div className="flex flex-col">
+                    <span className="text-sm line-through opacity-40">{product.price.toLocaleString()} {product.currency}</span>
+                    <span className="text-xl md:text-2xl font-black text-rose-500">{effectivePrice.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
+                  </div>
+                ) : (
+                  <span className="text-xl md:text-2xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
+                )}
               </div>
               <button 
                 onClick={() => setIsConfiguring(true)} 
-                className="w-12 h-12 md:w-14 md:h-14 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
+                className={`w-12 h-12 md:w-14 md:h-14 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
               >
-                <Plus size={20} />
+                {product.stock <= 0 ? <X size={20} /> : <Plus size={20} />}
               </button>
             </div>
           ) : (
@@ -76,7 +119,7 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
                 </button>
                 <span className="text-lg md:text-xl font-black">{quantity}</span>
                 <button 
-                  onClick={quantity >= 99 ? undefined : () => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                   className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
                 >
                   <Plus size={14} />
@@ -96,7 +139,7 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
   );
 };
 
-const Navigation = ({ cartCount }: { cartCount: number }) => {
+const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -119,9 +162,9 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
         <div className="max-w-6xl mx-auto glass-nav rounded-full shadow-xl py-2 md:py-3 px-4 md:px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-brand-dark rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-               <img src={INITIAL_DB.companyInfo.logo} className="w-full h-full object-contain" alt="Logo" />
+               <img src={db.companyInfo.logo} className="w-full h-full object-contain" alt="Logo" />
             </div>
-            <span className="text-lg md:text-xl font-black tracking-tighter text-brand-dark dark:text-white uppercase">SIMOSH</span>
+            <span className="text-lg md:text-xl font-black tracking-tighter text-brand-dark dark:text-white uppercase">{db.companyInfo.name.split(' ')[0]}</span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-1 bg-gray-100 dark:bg-white/5 p-1 rounded-full">
@@ -161,19 +204,22 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
             <button onClick={() => setIsOpen(true)} className="lg:hidden w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-brand-dark dark:text-white">
               <Menu size={18} />
             </button>
+
+            <Link to="/admin" className="hidden sm:flex w-8 h-8 md:w-10 md:h-10 items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-gray-400 hover:text-brand-mint transition-colors">
+              <Settings size={16} />
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Sidebar */}
       <div className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${isOpen ? 'visible' : 'invisible'}`}>
         <div className={`absolute inset-0 bg-brand-dark/60 backdrop-blur-md transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setIsOpen(false)} />
-        <div className={`absolute right-0 top-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-brand-dark shadow-2xl transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute right-0 top-0 bottom-0 w-4/5 max-sm max-w-sm bg-white dark:bg-brand-dark shadow-2xl transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="p-8 flex flex-col h-full">
             <div className="flex justify-between items-center mb-12">
               <div className="flex items-center gap-2">
-                 <img src={INITIAL_DB.companyInfo.logo} className="w-8 h-8 object-contain" alt="Logo" />
-                 <span className="text-2xl font-black tracking-tighter uppercase text-brand-mint">SIMOSH</span>
+                 <img src={db.companyInfo.logo} className="w-8 h-8 object-contain" alt="Logo" />
+                 <span className="text-2xl font-black tracking-tighter uppercase text-brand-mint">{db.companyInfo.name.split(' ')[0]}</span>
               </div>
               <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full">
                 <X size={24} />
@@ -189,6 +235,7 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
                   {item.label}
                 </Link>
               ))}
+              <Link to="/admin" className="text-xl font-bold uppercase text-gray-400">Admin Panel</Link>
             </div>
             <div className="mt-auto pt-8 border-t border-gray-100 dark:border-white/5 space-y-6">
               <div className="flex items-center justify-between">
@@ -214,6 +261,11 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
 };
 
 export default function App() {
+  const [db, setDb] = useState<Database>(() => {
+    const saved = localStorage.getItem('simosh_db');
+    return saved ? JSON.parse(saved) : INITIAL_DB;
+  });
+
   const [lang, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem('simosh_lang');
     return (saved as Language) || 'uz';
@@ -244,12 +296,13 @@ export default function App() {
     localStorage.setItem('simosh_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Handle automatic toast removal after 5 seconds
+  useEffect(() => {
+    localStorage.setItem('simosh_db', JSON.stringify(db));
+  }, [db]);
+
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 5000);
+      const timer = setTimeout(() => setToast(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -257,16 +310,16 @@ export default function App() {
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prev => {
       const ex = prev.find(i => i.product.id === product.id);
-      if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: i.quantity + quantity} : i);
+      if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: Math.min(product.stock, i.quantity + quantity)} : i);
       return [...prev, { product, quantity }];
     });
     setToast(translations[lang].cart.added);
   };
 
-  const updateCartQuantity = (productId: string, delta: number) => {
+  const updateCartQuantity = (productId: number, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.product.id === productId) {
-        const newQty = Math.max(1, item.quantity + delta);
+        const newQty = Math.max(1, Math.min(item.product.stock, item.quantity + delta));
         return { ...item, quantity: newQty };
       }
       return item;
@@ -284,7 +337,7 @@ export default function App() {
     }}>
       <Router>
         <div className="min-h-screen bg-brand-light dark:bg-brand-dark text-brand-dark dark:text-white transition-colors duration-500 flex flex-col">
-          <Navigation cartCount={cart.reduce((a, b) => a + b.quantity, 0)} />
+          <Navigation cartCount={cart.reduce((a, b) => a + b.quantity, 0)} db={db} />
           
           <main className="pt-20 md:pt-24 flex-1">
             <Routes>
@@ -301,7 +354,7 @@ export default function App() {
                         {translations[lang].home.heroTitle.split(' ').slice(2).join(' ')}
                       </h1>
                       <p className="text-base md:text-xl text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
-                        {INITIAL_DB.companyInfo.description[lang]}
+                        {db.companyInfo.description[lang]}
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4">
                         <Link to="/products" className="inline-flex items-center justify-center gap-3 gradient-mint text-white px-8 py-4 md:py-5 rounded-full font-black uppercase tracking-widest text-[10px] md:text-sm shadow-xl hover:scale-105 transition-all w-full sm:w-auto text-center">
@@ -315,7 +368,7 @@ export default function App() {
                     <div className="relative group animate-in fade-in zoom-in duration-1000 hidden lg:block">
                        <div className="absolute -inset-10 bg-brand-mint/10 rounded-full blur-[100px] group-hover:bg-brand-mint/20 transition-all" />
                        <div className="relative bg-white dark:bg-white/5 p-6 rounded-[3rem] shadow-2xl border border-white/20">
-                          <img src={INITIAL_DB.products[0].image} className="w-full aspect-square object-cover rounded-[2.5rem]" alt="Hero" />
+                          <img src={db.products[0]?.image || INITIAL_DB.products[0].image} className="w-full aspect-square object-cover rounded-[2.5rem]" alt="Hero" />
                        </div>
                     </div>
                   </section>
@@ -331,35 +384,36 @@ export default function App() {
                       </div>
                    </div>
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
-                     {INITIAL_DB.products.map(p => (
+                     {db.products.filter(p => p.is_active).map(p => (
                        <ProductCard key={p.id} product={p} onAdd={addToCart} />
                      ))}
                    </div>
                 </div>
               } />
 
-              <Route path="/ai" element={<SimoshAI products={INITIAL_DB.products} />} />
+              <Route path="/ai" element={<SimoshAI products={db.products} />} />
               
               <Route path="/about" element={
                 <div className="max-w-5xl mx-auto px-6 py-12 md:py-20 space-y-10 md:space-y-16">
                   <div className="text-center space-y-4">
-                    <h1 className="text-4xl md:text-6xl font-black uppercase">{INITIAL_DB.about.title[lang]}</h1>
+                    <h1 className="text-4xl md:text-6xl font-black uppercase">{db.about.title[lang]}</h1>
                     <div className="w-16 md:w-24 h-1.5 gradient-mint mx-auto rounded-full" />
                   </div>
                   <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
                     <div className="relative order-2 md:order-1">
                       <div className="absolute -inset-4 gradient-mint rounded-[2.5rem] md:rounded-[3.5rem] blur-lg opacity-20" />
-                      <img src={INITIAL_DB.about.image} className="relative rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full" alt="About" />
+                      <img src={db.about.image} className="relative rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full" alt="About" />
                     </div>
                     <p className="text-base md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed font-medium order-1 md:order-2">
-                      {INITIAL_DB.about.content[lang]}
+                      {db.about.content[lang]}
                     </p>
                   </div>
                 </div>
               } />
 
-              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/contact" element={<ContactPage companyInfo={db.companyInfo} />} />
               <Route path="/cart" element={<CartPage cart={cart} setCart={setCart} onUpdateQty={updateCartQuantity} />} />
+              <Route path="/admin" element={<AdminPanel db={db} onUpdate={setDb} />} />
             </Routes>
           </main>
 
@@ -379,7 +433,7 @@ export default function App() {
   );
 }
 
-const ContactPage = () => {
+const ContactPage = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
   const { lang, t, showToast } = useContext(LanguageContext);
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
 
@@ -404,7 +458,7 @@ const ContactPage = () => {
                </div>
                <div>
                   <p className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Telefon</p>
-                  <p className="text-lg md:text-xl font-bold">{INITIAL_DB.companyInfo.phone}</p>
+                  <p className="text-lg md:text-xl font-bold">{companyInfo.phone}</p>
                </div>
             </div>
             <div className="flex items-center gap-4 md:gap-6">
@@ -413,7 +467,7 @@ const ContactPage = () => {
                </div>
                <div>
                   <p className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Manzil</p>
-                  <p className="text-lg md:text-xl font-bold leading-tight">{INITIAL_DB.companyInfo.address[lang]}</p>
+                  <p className="text-lg md:text-xl font-bold leading-tight">{companyInfo.address[lang]}</p>
                </div>
             </div>
          </div>
@@ -436,7 +490,8 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
-  const total = cart.reduce((s: number, i: any) => s + i.product.price * i.quantity, 0);
+  
+  const total = cart.reduce((s: number, i: any) => s + getEffectivePrice(i.product) * i.quantity, 0);
 
   const handleCheckout = async () => {
     const success = await sendOrderToTelegram({
@@ -469,39 +524,42 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
       <div className="space-y-6 md:space-y-8">
         <h2 className="text-3xl md:text-4xl font-black tracking-tight uppercase">{t.cart.title}</h2>
         <div className="space-y-4">
-          {cart.map((item: any) => (
-            <div key={item.product.id} className="flex gap-4 md:gap-6 items-center bg-white dark:bg-white/5 p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-gray-100 dark:border-white/5 group relative">
-              <img src={item.product.image} className="w-20 h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl object-cover shadow-md" />
-              <div className="flex-1 space-y-1 md:space-y-2">
-                <h4 className="text-lg md:text-xl font-black leading-tight">{item.product.name[lang]}</h4>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
-                  <div className="flex items-center bg-gray-100 dark:bg-white/10 rounded-lg md:rounded-xl p-1 w-fit">
-                    <button 
-                      onClick={() => onUpdateQty(item.product.id, -1)}
-                      className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
-                    >
-                      <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                    </button>
-                    <span className="w-8 md:w-10 text-center font-black text-sm md:text-base">{item.quantity}</span>
-                    <button 
-                      onClick={() => onUpdateQty(item.product.id, 1)}
-                      className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
-                    >
-                      <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                    </button>
+          {cart.map((item: any) => {
+            const currentPrice = getEffectivePrice(item.product);
+            return (
+              <div key={item.product.id} className="flex gap-4 md:gap-6 items-center bg-white dark:bg-white/5 p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-gray-100 dark:border-white/5 group relative">
+                <img src={item.product.image} className="w-20 h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl object-cover shadow-md" />
+                <div className="flex-1 space-y-1 md:space-y-2">
+                  <h4 className="text-lg md:text-xl font-black leading-tight">{item.product.translations[lang].name}</h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
+                    <div className="flex items-center bg-gray-100 dark:bg-white/10 rounded-lg md:rounded-xl p-1 w-fit">
+                      <button 
+                        onClick={() => onUpdateQty(item.product.id, -1)}
+                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
+                      >
+                        <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                      </button>
+                      <span className="w-8 md:w-10 text-center font-black text-sm md:text-base">{item.quantity}</span>
+                      <button 
+                        onClick={() => onUpdateQty(item.product.id, 1)}
+                        className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
+                      >
+                        <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                      </button>
+                    </div>
+                    <span className="text-brand-mint font-bold text-sm md:text-base">{(currentPrice * item.quantity).toLocaleString()} {item.product.currency}</span>
                   </div>
-                  <span className="text-brand-mint font-bold text-sm md:text-base">{(item.product.price * item.quantity).toLocaleString()} UZS</span>
                 </div>
+                <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-9 h-9 md:w-10 md:h-10 shrink-0 flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg md:rounded-xl transition-colors">
+                  <Trash2 className="w-4.5 h-4.5 md:w-5 md:h-5" />
+                </button>
               </div>
-              <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-9 h-9 md:w-10 md:h-10 shrink-0 flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg md:rounded-xl transition-colors">
-                <Trash2 className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="pt-6 md:pt-8 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
            <span className="text-lg md:text-xl font-bold opacity-40">{t.cart.total}:</span>
-           <span className="text-2xl md:text-4xl font-black text-brand-mint">{total.toLocaleString()} <span className="text-xs md:text-sm">UZS</span></span>
+           <span className="text-2xl md:text-4xl font-black text-brand-mint">{total.toLocaleString()} <span className="text-xs md:text-sm">{cart[0]?.product.currency}</span></span>
         </div>
       </div>
 

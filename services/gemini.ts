@@ -5,9 +5,9 @@ import { Product, Language } from "../types";
 export const getAIResponse = async (prompt: string, products: Product[], lang: Language, imageBase64?: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  // Create a localized products context
+  // Create a localized products context using the new translations structure
   const productsList = products.map(p => 
-    `${p.name[lang]}: ${p.description[lang]} - Narxi: ${p.price} UZS`
+    `${p.translations[lang].name}: ${p.translations[lang].description} - Narxi: ${p.price} ${p.currency}`
   ).join('\n');
   
   const systemInstructions: Record<Language, string> = {

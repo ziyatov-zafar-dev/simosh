@@ -24,72 +24,51 @@ export const INITIAL_DB: Database = {
   },
   products: [
     {
-      id: "1",
-      name: {
-        uz: "Lavanda Shifosi",
-        ru: "Лавандовый Дзен",
-        en: "Lavender Zen",
-        tr: "Lavanta Huzuru"
-      },
-      description: {
-        uz: "Provans lavandasi va sovuq presslangan zaytun moyidan tayyorlangan tinchlantiruvchi ritual sovun.",
-        ru: "Успокаивающее ритуальное мыло из прованской лаванды и оливкового масла холодного отжима.",
-        en: "Soothing ritual soap crafted from Provence lavender and cold-pressed olive oil.",
-        tr: "Provans lavantası ve soğuk sıkım zeytinyağından üretilmiş sakinleştirici ritüel sabunu."
-      },
+      id: 101,
+      sku: "SIM-001",
       price: 45000,
+      currency: "UZS",
+      translations: {
+        uz: {
+          name: "Lavanda Shifosi",
+          description: "Provans lavandasi va sovuq presslangan zaytun moyidan tayyorlangan tinchlantiruvchi ritual sovun."
+        },
+        ru: {
+          name: "Лавандовый Дзен",
+          description: "Успокаивающее ритуальное мыло из прованской лаванды и оливкового масла холодного отжима."
+        },
+        en: {
+          name: "Lavender Zen",
+          description: "Soothing ritual soap crafted from Provence lavender and cold-pressed olive oil."
+        },
+        tr: {
+          name: "Lavanta Huzuru",
+          description: "Provans lavantası ve soğuk sıkım zeytinyağından üretilmiş sakinleştirici ritüel sabunu."
+        }
+      },
+      discount: {
+        type: "PERCENT",
+        value: 15,
+        start_date: "2024-01-01T00:00:00Z",
+        end_date: "2026-12-31T23:59:59Z"
+      },
+      promo_code: {
+        code: "SIMOSH2026",
+        type: "FIXED",
+        value: 5000,
+        start_date: "2024-01-10T00:00:00Z",
+        end_date: "2026-02-10T23:59:59Z",
+        usage_limit: 100
+      },
+      stock: 50,
+      is_active: true,
+      created_at: "2024-01-08T00:00:00Z",
       image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
       category: {
         uz: "Botanika",
         ru: "Ботаника",
         en: "Botanical",
         tr: "Botanik"
-      }
-    },
-    {
-      id: "2",
-      name: {
-        uz: "Asal va Sut",
-        ru: "Мед и Шелк",
-        en: "Honey & Silk",
-        tr: "Bal ve İpek"
-      },
-      description: {
-        uz: "Tog' asali va ipak oqsillari bilan boyitilgan, teringizni chuqur oziqlantiruvchi mo'jiza.",
-        ru: "Чудо, обогащенное горным медом и протеинами шелка для глубокого питания вашей кожи.",
-        en: "Enriched with mountain honey and silk proteins to deeply nourish your skin.",
-        tr: "Cildinizi derinlemesine beslemek için dağ balı ve ipek proteinleriyle zenginleştirilmiştir."
-      },
-      price: 38000,
-      image: "https://images.unsplash.com/photo-1546931457-3f895c12792e?auto=format&fit=crop&q=80&w=800",
-      category: {
-        uz: "Namlovchi",
-        ru: "Увлажнение",
-        en: "Hydrating",
-        tr: "Nemlendirici"
-      }
-    },
-    {
-      id: "3",
-      name: {
-        uz: "Zaytun Moyli",
-        ru: "Оливковый Ритуал",
-        en: "Olive Heritage",
-        tr: "Zeytin Mirası"
-      },
-      description: {
-        uz: "Asriy an'analar asosida yaratilgan, Egey dengizi zaytunlaridan olingan toza energiya.",
-        ru: "Чистая энергия эгейских оливок, созданная на основе вековых традиций.",
-        en: "Pure energy of Aegean olives, crafted based on centuries-old traditions.",
-        tr: "Asırlık geleneklere dayanan, Ege zeytinlerinin saf enerjisi."
-      },
-      price: 52000,
-      image: "https://images.unsplash.com/photo-1590439471364-192aa70c0b53?auto=format&fit=crop&q=80&w=800",
-      category: {
-        uz: "Klassik",
-        ru: "Классика",
-        en: "Heritage",
-        tr: "Klasik"
       }
     }
   ],
