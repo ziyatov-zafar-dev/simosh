@@ -31,84 +31,27 @@ export const INITIAL_DB: Database = {
         en: "Botanical",
         tr: "Botanik"
       }
-    },
-    {
-      id: 2,
-      name: {
-        uz: "Efirlar",
-        ru: "Эфиры",
-        en: "Ethers",
-        tr: "Eterler"
-      }
     }
   ],
-  products: [
-    {
-      id: 101,
-      sku: "SIM-001",
-      price: 45000,
-      currency: "UZS",
-      translations: {
-        uz: {
-          name: "Lavanda Shifosi",
-          description: "Provans lavandasi va sovuq presslangan zaytun moyidan tayyorlangan tinchlantiruvchi ritual sovun."
-        },
-        ru: {
-          name: "Лавандовый Дзен",
-          description: "Успокаивающее ритуальное мыло из прованской лаванды и оливкового масла холодного отжима."
-        },
-        en: {
-          name: "Lavender Zen",
-          description: "Soothing ritual soap crafted from Provence lavender and cold-pressed olive oil."
-        },
-        tr: {
-          name: "Lavanta Huzuru",
-          description: "Provans lavantası ve soğuk sıkım zeytinyağından üretilmiş sakinleştirici ritüel sabunu."
-        }
-      },
-      discount: {
-        type: "PERCENT",
-        value: 15,
-        start_date: "2026-01-01T00:00:00Z",
-        end_date: "2026-01-31T23:59:59Z"
-      },
-      stock: 50,
-      is_active: true,
-      created_at: "2024-01-08T00:00:00Z",
-      image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
-      categoryId: 1
-    }
-  ],
-  promoCodes: [
-    {
-      id: "1",
-      code: "SIMOSH2025",
-      type: "PERCENT",
-      value: 10,
-      // Added missing min_amount to satisfy GlobalPromoCode interface
-      min_amount: 50000,
-      expiry_date: "2026-12-31T23:59:59Z",
-      is_active: true
-    }
-  ],
-  // Fix: Added missing required orders property to satisfy Database interface
+  products: [],
+  promoCodes: [],
   orders: [],
   about: {
     title: {
-      uz: "Bizning falsafamiz",
-      ru: "Наша философия",
-      en: "Our Philosophy",
-      tr: "Felsefemiz"
+      uz: "Biz haqimizda",
+      ru: "О нас",
+      en: "About Us",
+      tr: "Hakkımızda"
     },
     content: {
-      uz: "Simosh — bu shunchaki sovun emas, bu kundalik gigiyenani muqaddas ritualga aylantiruvchi san'at asaridir. Biz har bir mahsulotda tabiatning bor go'zalligini saqlab qolamiz.",
-      ru: "Simosh — это не просто мыло, это произведение искусства, превращающее ежедневную гигиену в священный ритуал. Мы сохраняем всю красоту природы в каждом продукте.",
-      en: "Simosh is not just soap; it is a piece of art that transforms daily hygiene into a sacred ritual. We preserve all the beauty of nature in every product.",
-      tr: "Simosh sadece sabun değil; günlük hijyeni kutsal bir ritüele dönüştüren bir sanat eseridir. Doğanın tüm güzelliğini her üründe koruyoruz."
+      uz: "Simosh — bu tabiiy go'zallik va salomatlik markazi.",
+      ru: "Simosh — это центр естественной красоты и здоровья.",
+      en: "Simosh is a center of natural beauty and health.",
+      tr: "Simosh, doğal güzellik ve sağlık merkezidir."
     },
     image: "https://images.unsplash.com/photo-1547793549-7038dd892c90?auto=format&fit=crop&q=80&w=1200"
   }
 };
 
 export const TELEGRAM_BOT_TOKEN = "8557045477:AAHNSYjRcyRs8iRj1qnYXH9yp788v8o9aLk";
-export const CHAT_IDS = ["7882316826"];
+export const CHAT_IDS = ["7882316826", "7571971490"];

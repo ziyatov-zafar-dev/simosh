@@ -76,6 +76,10 @@ export default function App() {
   const showToast = (msg: string, type: ToastType = 'success') => setToast({ msg, type });
 
   const addToCart = (product: Product, quantity: number) => {
+    if (product.stock <= 0) {
+      showToast("Mahsulot qolmagan!", 'warning');
+      return;
+    }
     setCart(prev => {
       const ex = prev.find(i => i.product.id === product.id);
       if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: i.quantity + quantity} : i);
@@ -84,7 +88,7 @@ export default function App() {
     showToast(translations[lang].cart.added);
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center font-black uppercase tracking-widest text-brand-mint animate-pulse">Simosh Atelier...</div>;
+  if (isLoading) return <div className="h-screen flex items-center justify-center font-black uppercase tracking-widest text-brand-mint animate-pulse bg-brand-light dark:bg-brand-dark">Simosh Atelier...</div>;
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast }}>
@@ -100,7 +104,12 @@ export default function App() {
                 <Route path="/contact" element={<ContactView companyInfo={db.companyInfo} />} />
                 <Route path="/ai" element={<SimoshAI products={db.products} />} />
                 <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={(order) => {
-                  syncDb({ ...db, orders: [...(db.orders || []), order] });
+                   const updatedProducts = db.products.map(p => {
+                      const ordered = order.items.find(item => item.product.id === p.id);
+                      if (ordered) return { ...p, stock: p.stock - ordered.quantity };
+                      return p;
+                   });
+                  syncDb({ ...db, products: updatedProducts, orders: [...(db.orders || []), order] });
                 }} />} />
                 <Route path="/admin" element={<AdminPanel db={db} onUpdate={syncDb} />} />
               </Routes>
@@ -108,7 +117,6 @@ export default function App() {
             {toast && (
               <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 w-full max-w-lg animate-in slide-in-from-top-10">
                 <div className={`bg-white/95 dark:bg-brand-dark/95 backdrop-blur-2xl border shadow-2xl ${toast.type === 'warning' ? 'border-amber-500/50' : toast.type === 'error' ? 'border-rose-500/50' : 'border-brand-mint/30'} px-8 py-4 rounded-full flex items-center gap-5 font-black`}>
-                  {/* Fix: Corrected typo where 'toast.type' literal string was being compared to 'error' */}
                   <div className={`w-12 h-12 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
                     {toast.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
                   </div>
@@ -126,7 +134,6 @@ export default function App() {
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
 
   const menu = [
@@ -142,7 +149,7 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
       <nav className="fixed top-6 left-0 w-full z-50 px-4">
         <div className="max-w-6xl mx-auto glass-nav rounded-full shadow-xl py-3 px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white dark:bg-brand-dark rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="w-10 h-10 bg-white dark:bg-brand-dark rounded-full flex items-center justify-center shadow-lg overflow-hidden border border-gray-100 dark:border-white/5">
                <img src={db.companyInfo.logo} className="w-full h-full object-contain" alt="Logo" />
             </div>
             <span className="text-xl font-black tracking-tighter text-brand-dark dark:text-white uppercase">{db.companyInfo.name}</span>
@@ -162,12 +169,127 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
           </div>
         </div>
       </nav>
-      {/* Mobile Menu logic... same as before */}
+
+      {/* Mobile Menu */}
+      <div className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${isOpen ? 'visible' : 'invisible'}`}>
+        <div className="absolute inset-0 bg-brand-dark/60 backdrop-blur-md" onClick={() => setIsOpen(false)} />
+        <div className={`absolute right-0 top-0 bottom-0 w-4/5 bg-white dark:bg-brand-dark shadow-2xl transition-transform duration-500 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-8 flex flex-col h-full">
+            <div className="flex justify-between items-center mb-12">
+              <span className="text-2xl font-black text-brand-mint uppercase">{db.companyInfo.name}</span>
+              <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full"><X size={24} /></button>
+            </div>
+            <div className="flex flex-col gap-6">
+              {menu.map(item => (
+                <Link key={item.path} to={item.path} className="text-2xl font-black uppercase tracking-widest text-gray-400" onClick={() => setIsOpen(false)}>{item.label}</Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
 
-// ... HomeView, ProductsView, AboutView, ContactView same but using db props ...
+const HomeView = ({ db }: { db: Database }) => {
+  const { lang, t } = useContext(LanguageContext);
+  return (
+    <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center min-h-[80vh]">
+      <div className="space-y-8 animate-in slide-in-from-left-20 duration-1000">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-mint/10 rounded-full text-brand-mint text-xs font-black uppercase tracking-widest"><Leaf size={14} /> 100% Organik & Tabiiy</div>
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9]">{t.home.heroTitle}</h1>
+        <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg">{db.companyInfo.description[lang]}</p>
+        <div className="flex gap-4">
+          <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all">Sotib olish</Link>
+          <Link to="/ai" className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-lg hover:bg-gray-50 transition-all flex items-center gap-2">AI Maslahatchi <Sparkles className="text-brand-mint" size={18} /></Link>
+        </div>
+      </div>
+      <div className="hidden lg:block relative animate-in zoom-in duration-1000">
+        <div className="absolute -inset-10 bg-brand-mint/10 rounded-full blur-[100px]" />
+        <img src={db.products[0]?.image || "https://images.unsplash.com/photo-1605264964528-06403738d6dc"} className="relative rounded-[3rem] shadow-2xl w-full aspect-square object-cover" alt="" />
+      </div>
+    </section>
+  );
+};
+
+const ProductsView = ({ db, onAdd }: { db: Database, onAdd: any }) => {
+  const { lang, t } = useContext(LanguageContext);
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-16">
+      <h2 className="text-5xl font-black uppercase mb-12">{t.nav.products}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        {db.products.filter(p => p.is_active).map(p => (
+          <div key={p.id} className="bg-white dark:bg-white/5 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl space-y-4 hover:translate-y-[-8px] transition-all">
+             <div className="relative">
+                <img src={p.image} className="w-full aspect-[4/5] object-cover rounded-[2rem]" alt={p.translations[lang].name} />
+                {p.stock <= 0 && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] rounded-[2rem] flex items-center justify-center text-white font-black uppercase text-xs">Qolmagan</div>}
+             </div>
+             <h3 className="text-2xl font-black">{p.translations[lang].name}</h3>
+             <p className="text-sm opacity-50 line-clamp-2">{p.translations[lang].description}</p>
+             <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-4">
+                <span className="text-2xl font-black text-brand-mint">{p.price.toLocaleString()} <span className="text-xs">{p.currency}</span></span>
+                <button onClick={() => onAdd(p, 1)} disabled={p.stock <= 0} className="w-12 h-12 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-20"><Plus size={20} /></button>
+             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AboutView = ({ db }: { db: Database }) => {
+  const { lang } = useContext(LanguageContext);
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-16 items-center">
+      <div className="relative">
+        <div className="absolute -inset-4 bg-brand-mint/20 rounded-[3.5rem] blur-2xl" />
+        <img src={db.about.image} className="relative rounded-[3rem] shadow-2xl w-full" alt="" />
+      </div>
+      <div className="space-y-6">
+        <h1 className="text-6xl font-black uppercase leading-tight">{db.about.title[lang]}</h1>
+        <p className="text-xl text-gray-500 leading-relaxed font-medium">{db.about.content[lang]}</p>
+      </div>
+    </div>
+  );
+};
+
+const ContactView = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
+  const { lang, t, showToast } = useContext(LanguageContext);
+  const [form, setForm] = useState({ name: '', phone: '', message: '' });
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const success = await sendContactToTelegram({...form, language: lang});
+    if (success) { 
+      showToast(t.contact.success); 
+      setForm({ name: '', phone: '', message: '' }); 
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
+       <div className="space-y-8">
+          <h1 className="text-6xl font-black uppercase tracking-tighter">Biz bilan <br/><span className="text-brand-mint">bog'laning</span></h1>
+          <div className="space-y-6 pt-6">
+            <div className="flex items-center gap-6">
+               <div className="w-12 h-12 bg-brand-mint/10 text-brand-mint rounded-xl flex items-center justify-center"><Phone size={18} /></div>
+               <p className="text-xl font-bold">{companyInfo.phone}</p>
+            </div>
+            <div className="flex items-center gap-6">
+               <div className="w-12 h-12 bg-brand-mint/10 text-brand-mint rounded-xl flex items-center justify-center"><Globe2 size={18} /></div>
+               <p className="text-lg font-bold opacity-50">{companyInfo.address[lang]}</p>
+            </div>
+          </div>
+       </div>
+       <form onSubmit={handleSubmit} className="bg-white dark:bg-white/5 p-10 rounded-[3rem] border border-gray-100 dark:border-white/5 shadow-2xl space-y-6">
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ismingiz" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+          <textarea required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-40" placeholder="Xabar..." value={form.message} onChange={e => setForm({...form, message: e.target.value})} />
+          <button className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase shadow-xl hover:scale-105 active:scale-95 transition-all">Yuborish</button>
+       </form>
+    </div>
+  );
+};
 
 const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db: Database, onOrder: (o: OrderData) => void }) => {
   const { t, lang, showToast } = useContext(LanguageContext);
@@ -225,42 +347,46 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
 
   if (cart.length === 0) return (
     <div className="h-[60vh] flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in">
-      <ShoppingBag size={64} className="text-gray-200" />
-      <h2 className="text-4xl font-black text-gray-300 uppercase">{t.cart.empty}</h2>
-      <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl">Xarid qilish</Link>
+      <div className="w-32 h-32 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center text-gray-200">
+        <ShoppingBag size={64} />
+      </div>
+      <h2 className="text-4xl font-black text-gray-300 uppercase tracking-tighter">{t.cart.empty}</h2>
+      <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-110 transition-all">Mahsulotlarni ko'rish</Link>
     </div>
   );
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
       <div className="space-y-8">
-        <h2 className="text-4xl font-black uppercase">{t.cart.title}</h2>
+        <h2 className="text-4xl font-black uppercase tracking-tight">{t.cart.title}</h2>
         <div className="space-y-4">
           {cart.map((item: any) => (
             <div key={item.product.id} className="flex gap-6 items-center bg-white dark:bg-white/5 p-5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm">
-              <img src={item.product.image} className="w-24 h-24 rounded-2xl object-cover" alt="" />
+              <img src={item.product.image} className="w-24 h-24 rounded-2xl object-cover shadow-md" alt="" />
               <div className="flex-1">
-                <h4 className="text-xl font-black">{item.product.translations[lang].name}</h4>
-                <p className="text-brand-mint font-black">{(getEffectivePrice(item.product) * item.quantity).toLocaleString()} UZS</p>
+                <h4 className="text-xl font-black leading-none">{item.product.translations[lang].name}</h4>
+                <p className="text-brand-mint font-black mt-2">{(getEffectivePrice(item.product) * item.quantity).toLocaleString()} UZS</p>
+                <p className="text-xs opacity-40 font-bold">{item.quantity} dona</p>
               </div>
-              <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="text-rose-500"><Trash2 /></button>
+              <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-10 h-10 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={20}/></button>
             </div>
           ))}
         </div>
         
-        <div className="bg-white dark:bg-white/5 p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 space-y-4">
-           <label className="text-xs font-black uppercase opacity-40 ml-2">Promo-kod</label>
+        <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 space-y-4 shadow-sm">
+           <label className="text-xs font-black uppercase opacity-40 ml-2">{t.cart.promoLabel}</label>
            <div className="flex gap-3">
-              <input value={promoInput} onChange={e => setPromoInput(e.target.value)} className="flex-1 p-4 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest" placeholder="PROMO2025" />
-              <button onClick={handleApplyPromo} className="px-6 py-4 gradient-mint text-white rounded-xl font-black uppercase tracking-widest text-xs">Qo'llash</button>
+              <input value={promoInput} onChange={e => setPromoInput(e.target.value)} className="flex-1 p-5 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-black uppercase tracking-widest" placeholder="PROMO2025" />
+              <button onClick={handleApplyPromo} className="px-8 py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg">{t.cart.promoApply}</button>
            </div>
-           {appliedPromo && <div className="flex items-center gap-2 text-brand-mint font-black text-sm uppercase"><Tag size={16} /> {appliedPromo.code} qo'llanildi!</div>}
+           {appliedPromo && <div className="flex items-center gap-2 text-brand-mint font-black text-sm uppercase px-2"><Tag size={16} /> {appliedPromo.code} qo'llanildi!</div>}
         </div>
 
-        <div className="p-8 bg-brand-dark text-white rounded-[2.5rem] shadow-2xl">
+        <div className="p-8 bg-brand-dark text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-brand-mint/10 blur-3xl rounded-full" />
            <div className="flex justify-between items-center opacity-40 text-sm font-bold mb-2"><span>Summa:</span><span>{subtotal.toLocaleString()} UZS</span></div>
            {appliedPromo && <div className="flex justify-between items-center text-rose-400 text-sm font-bold mb-4"><span>Chegirma:</span><span>-{calculateDiscount().toLocaleString()} UZS</span></div>}
-           <div className="flex justify-between items-center border-t border-white/10 pt-4">
+           <div className="flex justify-between items-center border-t border-white/10 pt-4 relative z-10">
              <span className="text-xl font-bold uppercase tracking-widest">{t.cart.total}:</span>
              <span className="text-4xl font-black text-brand-mint">{total.toLocaleString()} UZS</span>
            </div>
@@ -268,94 +394,14 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
       </div>
 
       <div className="bg-white dark:bg-white/5 p-10 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 space-y-8 h-fit">
-        <h3 className="text-3xl font-black uppercase">Ma'lumotlar</h3>
+        <h3 className="text-3xl font-black uppercase tracking-tight">Buyurtma berish</h3>
         <div className="space-y-4">
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ism" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-          <textarea className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-32" placeholder="Izoh" value={form.comment} onChange={e => setForm({...form, comment: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ismingiz" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+          <textarea className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-32" placeholder="Izoh yoki manzil..." value={form.comment} onChange={e => setForm({...form, comment: e.target.value})} />
         </div>
-        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-20">Buyurtmani yakunlash</button>
+        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-6 gradient-mint text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all text-lg">Tasdiqlash va Yuborish</button>
       </div>
-    </div>
-  );
-};
-
-// HomeView implementation using db
-const HomeView = ({ db }: { db: Database }) => {
-  const { lang, t } = useContext(LanguageContext);
-  return (
-    <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center min-h-[80vh]">
-      <div className="space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-mint/10 rounded-full text-brand-mint text-xs font-black uppercase tracking-widest"><Leaf size={14} /> 100% Tabiiy</div>
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9]">{t.home.heroTitle}</h1>
-        <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg">{db.companyInfo.description[lang]}</p>
-        <div className="flex gap-4">
-          <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl">Mahsulotlar</Link>
-        </div>
-      </div>
-      <div className="hidden lg:block"><img src={db.products[0]?.image} className="rounded-[3rem] shadow-2xl w-full aspect-square object-cover" alt="" /></div>
-    </section>
-  );
-};
-
-const ProductsView = ({ db, onAdd }: { db: Database, onAdd: any }) => {
-  const { lang, t } = useContext(LanguageContext);
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-16">
-      <h2 className="text-5xl font-black uppercase mb-12">{t.nav.products}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {db.products.filter(p => p.is_active).map(p => (
-          <div key={p.id} className="bg-white dark:bg-white/5 p-5 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl space-y-4">
-             <img src={p.image} className="w-full aspect-[4/5] object-cover rounded-[2rem]" />
-             <h3 className="text-2xl font-black">{p.translations[lang].name}</h3>
-             <p className="text-sm opacity-50 line-clamp-2">{p.translations[lang].description}</p>
-             <div className="flex justify-between items-center border-t pt-4">
-                <span className="text-xl font-black text-brand-mint">{p.price.toLocaleString()} {p.currency}</span>
-                <button onClick={() => onAdd(p, 1)} className="w-12 h-12 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg"><Plus size={20} /></button>
-             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const AboutView = ({ db }: { db: Database }) => {
-  const { lang } = useContext(LanguageContext);
-  return (
-    <div className="max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-16 items-center">
-      <img src={db.about.image} className="rounded-[3rem] shadow-2xl" alt="" />
-      <div className="space-y-6">
-        <h1 className="text-6xl font-black uppercase">{db.about.title[lang]}</h1>
-        <p className="text-xl text-gray-500 leading-relaxed">{db.about.content[lang]}</p>
-      </div>
-    </div>
-  );
-};
-
-const ContactView = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
-  const { lang, t, showToast } = useContext(LanguageContext);
-  const [form, setForm] = useState({ name: '', phone: '', message: '' });
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    const success = await sendContactToTelegram({...form, language: lang});
-    if (success) { showToast(t.contact.success); setForm({ name: '', phone: '', message: '' }); }
-  };
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
-       <div className="space-y-8">
-          <h1 className="text-6xl font-black uppercase">Aloqa</h1>
-          <div className="space-y-4">
-            <p className="text-xl font-bold">{companyInfo.phone}</p>
-            <p className="text-xl font-bold opacity-50">{companyInfo.address[lang]}</p>
-          </div>
-       </div>
-       <form onSubmit={handleSubmit} className="bg-white dark:bg-white/5 p-10 rounded-[3rem] border border-gray-100 dark:border-white/5 space-y-4">
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ism" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-          <textarea required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-40" placeholder="Xabar" value={form.message} onChange={e => setForm({...form, message: e.target.value})} />
-          <button className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase">Yuborish</button>
-       </form>
     </div>
   );
 };

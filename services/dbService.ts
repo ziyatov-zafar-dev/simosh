@@ -4,7 +4,6 @@ import { INITIAL_DB } from '../constants';
 
 const DB_URL = '/db.json';
 
-// Umumiy yuklash
 export const loadDb = async (): Promise<Database> => {
   try {
     const response = await fetch(DB_URL);
@@ -17,11 +16,10 @@ export const loadDb = async (): Promise<Database> => {
   }
 };
 
-// Umumiy saqlash (Barcha CRUD amallari oxirida ushbu funksiya orqali serverga yozadi)
 export const saveDb = async (db: Database): Promise<boolean> => {
   try {
     const response = await fetch(DB_URL, {
-      method: 'POST', // Eslatma: Haqiqiy serverda bu PUT yoki POST bo'lishi kerak
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(db)
     });
@@ -32,47 +30,52 @@ export const saveDb = async (db: Database): Promise<boolean> => {
   }
 };
 
-// Mahsulotlar uchun CRUD
-export const addProduct = (db: Database, product: Product): Database => {
-  return { ...db, products: [...db.products, product] };
-};
+// --- CRUD Actions ---
 
-export const updateProduct = (db: Database, updatedProduct: Product): Database => {
-  return { ...db, products: db.products.map(p => p.id === updatedProduct.id ? updatedProduct : p) };
+// Products
+export const addOrUpdateProduct = (db: Database, product: Product): Database => {
+  const exists = db.products.find(p => p.id === product.id);
+  const newProducts = exists 
+    ? db.products.map(p => p.id === product.id ? product : p)
+    : [...db.products, product];
+  return { ...db, products: newProducts };
 };
 
 export const deleteProduct = (db: Database, id: number): Database => {
   return { ...db, products: db.products.filter(p => p.id !== id) };
 };
 
-// Kategoriyalar uchun CRUD
-export const addCategory = (db: Database, category: Category): Database => {
-  return { ...db, categories: [...db.categories, category] };
-};
-
-export const updateCategory = (db: Database, updatedCategory: Category): Database => {
-  return { ...db, categories: db.categories.map(c => c.id === updatedCategory.id ? updatedCategory : c) };
+// Categories
+export const addOrUpdateCategory = (db: Database, category: Category): Database => {
+  const exists = db.categories.find(c => c.id === category.id);
+  const newCats = exists
+    ? db.categories.map(c => c.id === category.id ? category : c)
+    : [...db.categories, category];
+  return { ...db, categories: newCats };
 };
 
 export const deleteCategory = (db: Database, id: number): Database => {
   return { ...db, categories: db.categories.filter(c => c.id !== id) };
 };
 
-// Promo-kodlar uchun CRUD
-export const addPromoCode = (db: Database, promo: GlobalPromoCode): Database => {
-  return { ...db, promoCodes: [...db.promoCodes, promo] };
+// Promo Codes
+export const addOrUpdatePromo = (db: Database, promo: GlobalPromoCode): Database => {
+  const exists = db.promoCodes.find(p => p.id === promo.id);
+  const newPromos = exists
+    ? db.promoCodes.map(p => p.id === promo.id ? promo : p)
+    : [...db.promoCodes, promo];
+  return { ...db, promoCodes: newPromos };
 };
 
-export const deletePromoCode = (db: Database, id: string): Database => {
+export const deletePromo = (db: Database, id: string): Database => {
   return { ...db, promoCodes: db.promoCodes.filter(p => p.id !== id) };
 };
 
-// Kompaniya ma'lumotlarini yangilash
-export const updateCompanyInfo = (db: Database, info: CompanyInfo): Database => {
-  return { ...db, companyInfo: info };
-};
+// Company & About
+export const updateCompany = (db: Database, info: CompanyInfo): Database => ({ ...db, companyInfo: info });
+export const updateAbout = (db: Database, about: Database['about']): Database => ({ ...db, about });
 
-// Buyurtmalar statusini o'zgartirish
+// Orders
 export const updateOrderStatus = (db: Database, orderId: string, status: OrderData['status']): Database => {
   return { ...db, orders: db.orders.map(o => o.id === orderId ? { ...o, status } : o) };
 };
