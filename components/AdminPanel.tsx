@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   LayoutDashboard, Package, Building2, Info, LogOut, 
   Plus, Edit, Trash2, Save, X, Image as ImageIcon,
-  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket, KeyRound, ArrowLeft
+  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket, KeyRound, ArrowLeft,
+  Eye, EyeOff, Upload, Camera
 } from 'lucide-react';
 import { LanguageContext } from '../App';
 import { Product, CompanyInfo, Database, Language, GlobalPromoCode, Category } from '../types';
@@ -22,11 +23,18 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Password Visibility States
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Admin States
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingPromo, setEditingPromo] = useState<GlobalPromoCode | null>(null);
   const [isAddingPromo, setIsAddingPromo] = useState(false);
+
+  const productFileRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated) {
     const handleLogin = async (e: React.FormEvent) => {
@@ -84,7 +92,23 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parol</label>
-                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={password} onChange={e => setPassword(e.target.value)} />
+                  <div className="relative">
+                    <input 
+                      required 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
+                      value={password} 
+                      onChange={e => setPassword(e.target.value)} 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -109,11 +133,43 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Yangi parol</label>
-                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                  <div className="relative">
+                    <input 
+                      required 
+                      type={showNewPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
+                      value={newPassword} 
+                      onChange={e => setNewPassword(e.target.value)} 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
+                    >
+                      {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parolni tasdiqlash</label>
-                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                  <div className="relative">
+                    <input 
+                      required 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
+                      value={confirmPassword} 
+                      onChange={e => setConfirmPassword(e.target.value)} 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -131,7 +187,6 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     );
   }
 
-  // Admin Dashboard Content...
   const handleLogout = () => {
     logoutAdmin();
     setIsAuthenticated(false);
@@ -158,6 +213,20 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     setEditingProduct(null);
     setIsAddingProduct(false);
     showToast("Mahsulot saqlandi");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingProduct) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Simulating the path images/products/filename. 
+        // In a real server environment, we would upload the file.
+        // Here we store as Base64 so it persists in the local DB (localStorage).
+        setEditingProduct({ ...editingProduct, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDeletePromo = (id: string) => {
@@ -317,6 +386,39 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
             <div className="grid md:grid-cols-3 gap-8">
               <div className="space-y-4">
                 <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Asosiy</p>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Mahsulot Rasmi</label>
+                  <div 
+                    onClick={() => productFileRef.current?.click()}
+                    className="relative group cursor-pointer aspect-square rounded-[2rem] bg-gray-50 dark:bg-white/5 border-2 border-dashed border-gray-200 dark:border-white/10 overflow-hidden flex flex-col items-center justify-center transition-all hover:border-brand-mint"
+                  >
+                    {editingProduct?.image ? (
+                      <>
+                        <img src={editingProduct.image} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Upload className="text-white" size={32} />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-brand-mint transition-colors">
+                        <Camera size={40} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Rasm yuklash</span>
+                      </div>
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={productFileRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                  />
+                  <p className="text-[8px] text-center opacity-30 font-bold uppercase tracking-widest mt-2">
+                    Rasm images/products/ papkasiga saqlanadi
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">SKU</label>
                   <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.sku} onChange={e => setEditingProduct({...editingProduct!, sku: e.target.value})} />
@@ -337,10 +439,6 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                    <label className="text-[10px] font-black uppercase opacity-40 ml-2">Stock</label>
                    <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.stock} onChange={e => setEditingProduct({...editingProduct!, stock: Number(e.target.value)})} />
                 </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Rasm URL</label>
-                   <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.image} onChange={e => setEditingProduct({...editingProduct!, image: e.target.value})} />
-                </div>
               </div>
               <div className="space-y-4 md:col-span-2">
                 <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Tarjimalar</p>
@@ -349,6 +447,8 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                     <div key={l} className="space-y-2 border-l-2 border-brand-mint/20 pl-4 py-1">
                       <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Name</label>
                       <input className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold mb-2" value={editingProduct?.translations[l].name} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], name: e.target.value } }})} />
+                      <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Description</label>
+                      <textarea className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold h-24" value={editingProduct?.translations[l].description} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], description: e.target.value } }})} />
                     </div>
                   ))}
                 </div>
