@@ -15,6 +15,25 @@ import AdminPanel from './components/AdminPanel';
 
 type ToastType = 'success' | 'warning' | 'error';
 
+// Helper function to calculate the effective price of a product considering its discount
+const getEffectivePrice = (product: Product): number => {
+  if (!product.discount) return product.price;
+  
+  const now = new Date();
+  const start = new Date(product.discount.start_date);
+  const end = new Date(product.discount.end_date);
+  
+  if (now >= start && now <= end) {
+    if (product.discount.type === 'PERCENT') {
+      return product.price * (1 - product.discount.value / 100);
+    } else {
+      return Math.max(0, product.price - product.discount.value);
+    }
+  }
+  
+  return product.price;
+};
+
 export const LanguageContext = createContext<{ 
   lang: Language, 
   setLang: (l: Language) => void, 
@@ -30,28 +49,6 @@ export const LanguageContext = createContext<{
   toggleTheme: () => {},
   showToast: () => {}
 });
-
-const flags: Record<Language, string> = {
-  uz: '🇺🇿',
-  ru: '🇷🇺',
-  en: '🇺🇸',
-  tr: '🇹🇷'
-};
-
-const getEffectivePrice = (product: Product) => {
-  const now = new Date();
-  if (product.discount) {
-    const start = new Date(product.discount.start_date);
-    const end = new Date(product.discount.end_date);
-    if (now >= start && now <= end) {
-      if (product.discount.type === 'PERCENT') {
-        return product.price * (1 - product.discount.value / 100);
-      }
-      return Math.max(0, product.price - product.discount.value);
-    }
-  }
-  return product.price;
-};
 
 export default function App() {
   const [db, setDb] = useState<Database>(INITIAL_DB);
@@ -73,7 +70,10 @@ export default function App() {
     await saveDb(newDb);
   };
 
-  const showToast = (msg: string, type: ToastType = 'success') => setToast({ msg, type });
+  const showToast = (msg: string, type: ToastType = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const addToCart = (product: Product, quantity: number) => {
     if (product.stock <= 0) {
@@ -93,43 +93,50 @@ export default function App() {
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast }}>
       <Router>
-        <div className={`min-h-screen ${isDark ? 'dark' : ''}`}>
-          <div className="bg-brand-light dark:bg-brand-dark text-brand-dark dark:text-white transition-colors duration-500 flex flex-col min-h-screen">
-            <Navigation cartCount={cart.reduce((a, b) => a + b.quantity, 0)} db={db} />
-            <main className="pt-24 flex-1">
-              <Routes>
-                <Route path="/" element={<HomeView db={db} />} />
-                <Route path="/products" element={<ProductsView db={db} onAdd={addToCart} />} />
-                <Route path="/about" element={<AboutView db={db} />} />
-                <Route path="/contact" element={<ContactView companyInfo={db.companyInfo} />} />
-                <Route path="/ai" element={<SimoshAI products={db.products} />} />
-                <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={(order) => {
-                   const updatedProducts = db.products.map(p => {
-                      const ordered = order.items.find(item => item.product.id === p.id);
-                      if (ordered) return { ...p, stock: p.stock - ordered.quantity };
-                      return p;
-                   });
-                  syncDb({ ...db, products: updatedProducts, orders: [...(db.orders || []), order] });
-                }} />} />
-                <Route path="/admin" element={<AdminPanel db={db} onUpdate={syncDb} />} />
-              </Routes>
-            </main>
-            {toast && (
-              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 w-full max-w-lg animate-in slide-in-from-top-10">
-                <div className={`bg-white/95 dark:bg-brand-dark/95 backdrop-blur-2xl border shadow-2xl ${toast.type === 'warning' ? 'border-amber-500/50' : toast.type === 'error' ? 'border-rose-500/50' : 'border-brand-mint/30'} px-8 py-4 rounded-full flex items-center gap-5 font-black`}>
-                  <div className={`w-12 h-12 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
-                    {toast.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
-                  </div>
-                  <span className="flex-1 uppercase tracking-wider text-[13px]">{toast.msg}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <AppContent db={db} cart={cart} setCart={setCart} syncDb={syncDb} addToCart={addToCart} toast={toast} />
       </Router>
     </LanguageContext.Provider>
   );
 }
+
+const AppContent = ({ db, cart, setCart, syncDb, addToCart, toast }: any) => {
+  const location = useLocation();
+  const isAdminPath = location.pathname.startsWith('/admin');
+
+  return (
+    <div className={`min-h-screen ${isAdminPath ? 'bg-gray-50 dark:bg-[#070b14]' : 'bg-brand-light dark:bg-brand-dark'} transition-colors duration-500`}>
+      {!isAdminPath && <Navigation cartCount={cart.reduce((a: any, b: any) => a + b.quantity, 0)} db={db} />}
+      <main className={`${isAdminPath ? '' : 'pt-24'} flex-1`}>
+        <Routes>
+          <Route path="/" element={<HomeView db={db} />} />
+          <Route path="/products" element={<ProductsView db={db} onAdd={addToCart} />} />
+          <Route path="/about" element={<AboutView db={db} />} />
+          <Route path="/contact" element={<ContactView companyInfo={db.companyInfo} />} />
+          <Route path="/ai" element={<SimoshAI products={db.products} />} />
+          <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={(order: any) => {
+             const updatedProducts = db.products.map((p: any) => {
+                const ordered = order.items.find((item: any) => item.product.id === p.id);
+                if (ordered) return { ...p, stock: p.stock - ordered.quantity };
+                return p;
+             });
+            syncDb({ ...db, products: updatedProducts, orders: [...(db.orders || []), order] });
+          }} />} />
+          <Route path="/admin" element={<AdminPanel db={db} onUpdate={syncDb} />} />
+        </Routes>
+      </main>
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 w-full max-w-lg animate-in slide-in-from-top-10">
+          <div className={`bg-white/95 dark:bg-brand-dark/95 backdrop-blur-2xl border shadow-2xl ${toast.type === 'warning' ? 'border-amber-500/50' : toast.type === 'error' ? 'border-rose-500/50' : 'border-brand-mint/30'} px-8 py-4 rounded-full flex items-center gap-5 font-black`}>
+            <div className={`w-12 h-12 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
+              {toast.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
+            </div>
+            <span className="flex-1 uppercase tracking-wider text-[13px]">{toast.msg}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
@@ -201,7 +208,7 @@ const HomeView = ({ db }: { db: Database }) => {
         <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg">{db.companyInfo.description[lang]}</p>
         <div className="flex gap-4">
           <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all">Sotib olish</Link>
-          <Link to="/ai" className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-lg hover:bg-gray-50 transition-all flex items-center gap-2">AI Maslahatchi <Sparkles className="text-brand-mint" size={18} /></Link>
+          <Link to="/ai" className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-lg hover:bg-gray-50 transition-all flex items-center gap-2 text-brand-dark dark:text-white">AI Maslahatchi <Sparkles className="text-brand-mint" size={18} /></Link>
         </div>
       </div>
       <div className="hidden lg:block relative animate-in zoom-in duration-1000">
@@ -218,20 +225,28 @@ const ProductsView = ({ db, onAdd }: { db: Database, onAdd: any }) => {
     <div className="max-w-7xl mx-auto px-6 py-16">
       <h2 className="text-5xl font-black uppercase mb-12">{t.nav.products}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {db.products.filter(p => p.is_active).map(p => (
-          <div key={p.id} className="bg-white dark:bg-white/5 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl space-y-4 hover:translate-y-[-8px] transition-all">
-             <div className="relative">
-                <img src={p.image} className="w-full aspect-[4/5] object-cover rounded-[2rem]" alt={p.translations[lang].name} />
-                {p.stock <= 0 && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] rounded-[2rem] flex items-center justify-center text-white font-black uppercase text-xs">Qolmagan</div>}
-             </div>
-             <h3 className="text-2xl font-black">{p.translations[lang].name}</h3>
-             <p className="text-sm opacity-50 line-clamp-2">{p.translations[lang].description}</p>
-             <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-4">
-                <span className="text-2xl font-black text-brand-mint">{p.price.toLocaleString()} <span className="text-xs">{p.currency}</span></span>
-                <button onClick={() => onAdd(p, 1)} disabled={p.stock <= 0} className="w-12 h-12 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-20"><Plus size={20} /></button>
-             </div>
-          </div>
-        ))}
+        {db.products.filter(p => p.is_active).map(p => {
+          const effectivePrice = getEffectivePrice(p);
+          const hasDiscount = effectivePrice < p.price;
+          return (
+            <div key={p.id} className="bg-white dark:bg-white/5 p-6 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl space-y-4 hover:translate-y-[-8px] transition-all">
+               <div className="relative">
+                  <img src={p.image} className="w-full aspect-[4/5] object-cover rounded-[2rem]" alt={p.translations[lang].name} />
+                  {p.stock <= 0 && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] rounded-[2rem] flex items-center justify-center text-white font-black uppercase text-xs">Qolmagan</div>}
+                  {hasDiscount && <div className="absolute top-4 right-4 bg-rose-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">Chegirma!</div>}
+               </div>
+               <h3 className="text-2xl font-black">{p.translations[lang].name}</h3>
+               <p className="text-sm opacity-50 line-clamp-2">{p.translations[lang].description}</p>
+               <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-4">
+                  <div className="flex flex-col">
+                    {hasDiscount && <span className="text-xs line-through opacity-30 font-bold">{p.price.toLocaleString()} UZS</span>}
+                    <span className="text-2xl font-black text-brand-mint">{effectivePrice.toLocaleString()} <span className="text-xs">{p.currency}</span></span>
+                  </div>
+                  <button onClick={() => onAdd(p, 1)} disabled={p.stock <= 0} className="w-12 h-12 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-20"><Plus size={20} /></button>
+               </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -400,7 +415,7 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
           <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
           <textarea className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-32" placeholder="Izoh yoki manzil..." value={form.comment} onChange={e => setForm({...form, comment: e.target.value})} />
         </div>
-        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-6 gradient-mint text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all text-lg">Tasdiqlash va Yuborish</button>
+        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-6 gradient-mint text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all text-lg text-white">Tasdiqlash va Yuborish</button>
       </div>
     </div>
   );
