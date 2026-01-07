@@ -33,8 +33,10 @@ export interface Database {
 }
 
 export interface OrderData {
-  customerName: string;
+  firstName: string;
+  lastName: string;
   customerPhone: string;
+  comment: string;
   items: {
     product: Product;
     quantity: number;

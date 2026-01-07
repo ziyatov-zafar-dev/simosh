@@ -152,7 +152,7 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
             <Link to="/cart" className="relative w-8 h-8 md:w-10 md:h-10 gradient-mint text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
               <ShoppingBag size={16} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-brand-dark text-white text-[8px] font-black w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full border-2 border-white">
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] md:text-[10px] font-black w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full border-2 border-white dark:border-brand-dark shadow-lg animate-in zoom-in duration-300">
                   {cartCount}
                 </span>
               )}
@@ -373,7 +373,7 @@ const ContactPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await sendContactToTelegram({ ...form, email: 'Guest', language: lang });
+    const success = await sendContactToTelegram({ ...form, language: lang });
     if (success) {
       showToast(t.contact.success);
       setForm({ name: '', phone: '', message: '' });
@@ -420,14 +420,18 @@ const ContactPage = () => {
 
 const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
   const { t, lang, showToast } = useContext(LanguageContext);
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [comment, setComment] = useState('');
   const total = cart.reduce((s: number, i: any) => s + i.product.price * i.quantity, 0);
 
   const handleCheckout = async () => {
     const success = await sendOrderToTelegram({
-      customerName: name,
+      firstName,
+      lastName,
       customerPhone: phone,
+      comment,
       items: cart,
       totalPrice: total,
       language: lang
@@ -441,7 +445,6 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
   if (cart.length === 0) return (
     <div className="h-[60vh] md:h-[70vh] flex flex-col items-center justify-center space-y-6 md:space-y-8 animate-in fade-in zoom-in px-6 text-center">
       <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center text-gray-300">
-        {/* Fix: Lucide icons don't support responsive size props. Using className for responsiveness. */}
         <ShoppingBag className="w-12 h-12 md:w-16 md:h-16" />
       </div>
       <h2 className="text-2xl md:text-3xl font-black text-gray-400">{t.cart.empty}</h2>
@@ -465,7 +468,6 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
                       onClick={() => onUpdateQty(item.product.id, -1)}
                       className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
                     >
-                      {/* Fix: Lucide icons don't support responsive size props. Using className for responsiveness. */}
                       <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     </button>
                     <span className="w-8 md:w-10 text-center font-black text-sm md:text-base">{item.quantity}</span>
@@ -473,7 +475,6 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
                       onClick={() => onUpdateQty(item.product.id, 1)}
                       className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-md md:rounded-lg bg-white dark:bg-white/10 text-brand-dark dark:text-white"
                     >
-                      {/* Fix: Lucide icons don't support responsive size props. Using className for responsiveness. */}
                       <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     </button>
                   </div>
@@ -481,7 +482,6 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
                 </div>
               </div>
               <button onClick={() => setCart((p: any) => p.filter((i: any) => i.product.id !== item.product.id))} className="w-9 h-9 md:w-10 md:h-10 shrink-0 flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg md:rounded-xl transition-colors">
-                {/* Fix: Lucide icons don't support responsive size props. Using className for responsiveness. */}
                 <Trash2 className="w-4.5 h-4.5 md:w-5 md:h-5" />
               </button>
             </div>
@@ -499,12 +499,16 @@ const CartPage = ({ cart, setCart, onUpdateQty }: any) => {
           <p className="text-[10px] md:text-sm opacity-50 font-bold">Ma'lumotlaringizni to'ldiring, biz siz bilan bog'lanamiz.</p>
         </div>
         <div className="space-y-4">
-          <input value={name} onChange={e => setName(e.target.value)} className="w-full p-4 md:p-5 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="F.I.SH" />
+          <div className="grid grid-cols-2 gap-4">
+            <input value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full p-4 md:p-5 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="Ism" />
+            <input value={lastName} onChange={e => setLastName(e.target.value)} className="w-full p-4 md:p-5 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="Familiya" />
+          </div>
           <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full p-4 md:p-5 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold text-brand-dark dark:text-white" placeholder="+998" />
+          <textarea value={comment} onChange={e => setComment(e.target.value)} className="w-full p-4 md:p-5 rounded-xl md:rounded-2xl bg-gray-50 dark:bg-white/10 border-none outline-none focus:ring-2 focus:ring-brand-mint font-bold h-24 text-brand-dark dark:text-white" placeholder="Izoh (ixtiyoriy)" />
         </div>
         <button 
           onClick={handleCheckout}
-          disabled={!name || !phone}
+          disabled={!firstName || !lastName || !phone}
           className="w-full py-4 md:py-5 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-base md:text-lg shadow-xl uppercase tracking-widest disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all"
         >
           Buyurtmani tasdiqlash

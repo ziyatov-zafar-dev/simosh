@@ -3,24 +3,29 @@ import { OrderData } from '../types';
 import { TELEGRAM_BOT_TOKEN, CHAT_IDS } from '../constants';
 
 export const sendOrderToTelegram = async (order: OrderData) => {
-  const langLabels: Record<string, any> = {
-    uz: { order: "Yangi Buyurtma", customer: "Mijoz", phone: "Telefon", items: "Mahsulotlar", total: "Jami" },
-    ru: { order: "Новый Заказ", customer: "Клиент", phone: "Телефон", items: "Товары", total: "Итого" },
-    en: { order: "New Order", customer: "Customer", phone: "Phone", items: "Items", total: "Total" },
-    tr: { order: "Yeni Sipariş", customer: "Müşteri", phone: "Telefon", items: "Ürünler", total: "Toplam" }
+  // Admin uchun ma'lumotlar faqat o'zbek tilida
+  const l = { 
+    order: "Yangi Buyurtma", 
+    customer: "Mijoz", 
+    phone: "Telefon", 
+    items: "Mahsulotlar", 
+    total: "Jami",
+    userLang: "Foydalanuvchi tili",
+    comment: "Izoh"
   };
-
-  const l = langLabels[order.language] || langLabels.uz;
 
   const message = `
 <b>🚀 ${l.order}!</b>
 
-<b>👤 ${l.customer}:</b> ${order.customerName}
+<b>👤 ${l.customer}:</b> ${order.firstName} ${order.lastName}
 <b>📞 ${l.phone}:</b> ${order.customerPhone}
-<b>🌐 Til:</b> ${order.language.toUpperCase()}
+<b>🌐 ${l.userLang}:</b> ${order.language.toUpperCase()}
+
+<b>📝 ${l.comment}:</b>
+${order.comment || "Izoh qoldirilmagan"}
 
 <b>🛒 ${l.items}:</b>
-${order.items.map(item => `• ${item.product.name} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} so'm`).join('\n')}
+${order.items.map(item => `• ${item.product.name.uz} (${item.quantity}x) - ${(item.product.price * item.quantity).toLocaleString()} so'm`).join('\n')}
 
 <b>💰 ${l.total}:</b> ${order.totalPrice.toLocaleString()} so'm
   `.trim();
@@ -28,13 +33,13 @@ ${order.items.map(item => `• ${item.product.name} (${item.quantity}x) - ${(ite
   return sendMessage(message);
 };
 
-export const sendContactToTelegram = async (contact: { name: string, email: string, message: string, language: string }) => {
+export const sendContactToTelegram = async (contact: { name: string, phone: string, message: string, language: string }) => {
   const text = `
 <b>📩 Yangi Xabar (Bog'lanish)!</b>
 
 <b>👤 Ism:</b> ${contact.name}
-<b>📧 Email:</b> ${contact.email}
-<b>🌐 Til:</b> ${contact.language.toUpperCase()}
+<b>📞 Telefon:</b> ${contact.phone}
+<b>🌐 Foydalanuvchi tili:</b> ${contact.language.toUpperCase()}
 
 <b>📝 Xabar:</b>
 ${contact.message}
@@ -59,12 +64,14 @@ async function sendMessage(text: string) {
           });
           return response.ok;
         } catch (err) {
+          console.error("Telegram send error:", err);
           return false;
         }
       })
     );
     return results.some(res => res === true);
   } catch (error) {
+    console.error("Telegram service error:", error);
     return false;
   }
 }
