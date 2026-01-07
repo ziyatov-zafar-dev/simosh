@@ -31,7 +31,7 @@ export interface Product {
   categoryId: number;
   stock: number;
   status: 'ACTIVE' | 'INACTIVE';
-  image: string; // Base64 formatida saqlanadi
+  image: string;
   discount?: ProductDiscount;
 }
 
@@ -43,9 +43,12 @@ export interface Category {
 export interface User {
   id: string;
   email: string;
+  username: string;
   passwordHash: string;
   role: 'ADMIN' | 'MODERATOR';
-  name: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl: string;
 }
 
 export interface PromoCode {
@@ -58,8 +61,6 @@ export interface PromoCode {
   discountValue: number;
   minOrderAmount?: number;
   maxDiscountAmount?: number;
-  usageLimitTotal?: number;
-  usageLimitPerUser?: number;
   startsAt: string;
   endsAt: string;
   status: 'ACTIVE' | 'EXPIRED' | 'INACTIVE';

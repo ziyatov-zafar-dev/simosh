@@ -32,10 +32,13 @@ export const INITIAL_DB: Database = {
     {
       id: "admin-1",
       email: "akbarovamohinur23@gmail.com",
-      // 'Simosh0906.' paroli uchun SHA-256 hash
-      passwordHash: "8407c089204c356247963b538740f9f600f736021e86a9889423c10a624945d7",
+      username: "akbarova_mahinur",
+      // '123456' paroli uchun SHA-256 hash: 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
+      passwordHash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
       role: "ADMIN",
-      name: "Mohinur Akbarova"
+      firstName: "Mohinur",
+      lastName: "Akbarova",
+      profileImageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330"
     }
   ],
   categories: [

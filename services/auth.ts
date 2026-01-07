@@ -2,7 +2,7 @@
 import { User } from '../types';
 
 /**
- * Parolni hash qilish (SHA-256)
+ * SHA-256 Password hashing
  */
 export const hashPassword = async (password: string): Promise<string> => {
   const msgUint8 = new TextEncoder().encode(password);
@@ -12,18 +12,14 @@ export const hashPassword = async (password: string): Promise<string> => {
 };
 
 /**
- * LocalStorage ishlatilmaydi. 
- * Autentifikatsiya holati App.tsx dagi state orqali boshqariladi.
+ * LocalStorage is NOT used as per request.
+ * Authentication state is managed in App component.
  */
 export const logoutAdmin = () => {
-  // LocalStorage tozalash olib tashlandi
+  // No localStorage cleanup here
 };
 
 export const isAdminAuthenticated = (): boolean => {
-  // Endi state orqali tekshiriladi
+  // Always returns false by default; state must be checked in the app
   return false; 
-};
-
-export const getCurrentUser = (): User | null => {
-  return null;
 };

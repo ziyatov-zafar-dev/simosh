@@ -14,7 +14,7 @@ export const initDatabase = async () => {
   try {
     const db = await getDbInstance();
     
-    // Seed Users
+    // Seed Admin
     const usersCount = await db.collection('users').countDocuments();
     if (usersCount === 0) {
       await db.collection('users').insertMany(INITIAL_DB.users);
@@ -32,7 +32,7 @@ export const initDatabase = async () => {
       await db.collection('products').insertMany(INITIAL_DB.products);
     }
 
-    // Seed Settings (Company Info & About)
+    // Seed Settings
     const settingsCount = await db.collection('settings').countDocuments();
     if (settingsCount === 0) {
       await db.collection('settings').insertOne({
@@ -51,17 +51,13 @@ export const initDatabase = async () => {
       await db.collection('promoCodes').insertMany(INITIAL_DB.promoCodes);
     }
 
-    console.log("MongoDB muvaffaqiyatli initsializatsiya qilindi");
+    console.log("MongoDB initialized successfully");
   } catch (error) {
     console.error("Database initialization failed:", error);
     throw error;
   }
 };
 
-/**
- * Ushbu funksiya barcha kolleksiyalardagi ma'lumotlarni yig'ib,
- * App uchun Database interfeysi ko'rinishida qaytaradi.
- */
 export const getDb = async (): Promise<Database> => {
   const db = await getDbInstance();
   
@@ -78,15 +74,10 @@ export const getDb = async (): Promise<Database> => {
   return {
     companyInfo: companyDoc?.data || INITIAL_DB.companyInfo,
     about: aboutDoc?.data || INITIAL_DB.about,
-    // @ts-ignore
-    categories,
-    // @ts-ignore
-    products,
-    // @ts-ignore
-    promoCodes,
-    // @ts-ignore
-    orders,
-    // @ts-ignore
-    users
+    categories: categories as any,
+    products: products as any,
+    promoCodes: promoCodes as any,
+    orders: orders as any,
+    users: users as any
   };
 };
