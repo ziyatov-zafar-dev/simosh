@@ -98,7 +98,6 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
         </div>
         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
-        {/* Fixed Price Section - Now always visible outside configuration toggle */}
         <div className="flex flex-col border-t border-gray-50 dark:border-white/5 pt-3 mb-2">
           <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
           {activeDiscount ? (
@@ -549,13 +548,21 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     const now = getUzbekistanTime();
     const expiryDate = new Date(code.expiry_date);
     
-    if (!code.is_active || now > expiryDate) {
+    // Check if the code is active first
+    if (!code.is_active) {
+      setPromoError(t.cart.promoErrorInactive);
+      setAppliedPromo(null);
+      return;
+    }
+
+    // Check if the code has expired
+    if (now > expiryDate) {
       setPromoError(t.cart.promoErrorExpired);
       setAppliedPromo(null);
       return;
     }
 
-    // New check: Minimum order amount
+    // Check minimum order amount
     if (subtotal < code.min_amount) {
       const msg = t.cart.promoErrorMinAmount.replace('{amount}', code.min_amount.toLocaleString());
       setPromoError(msg);
