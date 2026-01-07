@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simosh — Tabiiy Shifobaxsh Sovunlar</title>
+    <title>Simosh — Premium Botanical Atelier</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,18 +16,14 @@
           extend: {
             colors: {
               brand: {
-                light: '#F8FAFC', // Screenshotdagi och rang
-                dark: '#0B1120',  // Screenshotdagi to'q navy
-                mint: '#10B981',  // Zumrad yashil
+                light: '#F8FAFC',
+                dark: '#0B1120',
+                mint: '#10B981',
                 accent: '#059669'
               }
             },
             fontFamily: {
               sans: ['"Outfit"', 'sans-serif'],
-            },
-            borderRadius: {
-              '4xl': '2rem',
-              '5xl': '3rem',
             }
           }
         }
@@ -38,17 +34,17 @@
             font-family: 'Outfit', sans-serif;
             background-color: #F8FAFC;
             transition: background-color 0.5s ease;
+            overflow-x: hidden;
         }
-        .dark body {
-            background-color: #0B1120;
-        }
+        .dark body { background-color: #0B1120; }
         .glass-nav {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .dark .glass-nav {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .gradient-mint {
             background: linear-gradient(135deg, #10B981 0%, #059669 100%);
@@ -58,11 +54,10 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .nav-pill-active {
+        .nav-active {
             background: linear-gradient(135deg, #10B981 0%, #059669 100%);
             color: white !important;
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 10px; }
     </style>
@@ -81,7 +76,7 @@
 }
 </script>
 </head>
-<body class="transition-colors duration-500">
+<body>
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
 </body>

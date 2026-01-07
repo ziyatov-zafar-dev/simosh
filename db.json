@@ -3,10 +3,10 @@
   "companyInfo": {
     "name": "Simosh Atelier",
     "description": {
-      "uz": "Tabiiy va sifatli sovunlar ishlab chiqaruvchi yetakchi brend. Bizning mahsulotlarimiz teringiz uchun eng yaxshi g'amxo'rlikni ta'minlaydi.",
-      "ru": "Ведущий бреnd натурального и качественного мыла. Наша продукция обеспечивает лучший уход за вашей кожей.",
-      "en": "A leading brand of natural and high-quality soaps. Our products provide the best care for your skin.",
-      "tr": "Doğal ve kaliteli sabunların lider markası. Ürünlerimiz cildiniz için en iyi bakımı sağlar."
+      "uz": "Simosh — tabiatning eng sof moddalari va zamonaviy botanika ilmi uyg'unlashgan premium sovunlar atelyesi.",
+      "ru": "Simosh — ателье премиального мыла, где чистейшие природные компоненты встречаются с современной ботанической наукой.",
+      "en": "Simosh is a premium soap atelier where nature's purest elements meet modern botanical science.",
+      "tr": "Simosh, doğanın en saf elementlerinin modern botanik bilimiyle buluştuğu premium bir sabun atölyesidir."
     },
     "phone": "+998 90 123 45 67",
     "email": "info@simosh.uz",
@@ -29,12 +29,12 @@
         "tr": "Lavanta Şifası"
       },
       "description": {
-        "uz": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun.",
-        "ru": "Натуральное мыло, обогащенное успокаивающим маслом лаванды.",
-        "en": "Natural soap enriched with soothing lavender oil.",
-        "tr": "Sakinleştirici lavanta yağı ile zenginleştirilmiş doğal sabun."
+        "uz": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun. Stressni kamaytiradi.",
+        "ru": "Натуральное мыло, обогащенное успокаивающим маслом лаванды. Снимает стресс.",
+        "en": "Natural soap enriched with soothing lavender oil. Reduces stress.",
+        "tr": "Sakinleştirici lavanta yağı ile zenginleştirilmiş doğal sabun. Stresi azaltır."
       },
-      "price": 25000,
+      "price": 45000,
       "image": "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
       "category": {
         "uz": "Botanika",
@@ -57,7 +57,7 @@
         "en": "A classic combination that keeps your skin soft and hydrated.",
         "tr": "Cildinizi yumuşak ve nemli tutan klasik bir kombinasyon."
       },
-      "price": 22000,
+      "price": 38000,
       "image": "https://images.unsplash.com/photo-1546931457-3f895c12792e?auto=format&fit=crop&q=80&w=800",
       "category": {
         "uz": "Oziqlantiruvchi",
