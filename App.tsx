@@ -2,20 +2,20 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
-  ShoppingBag, Sun, Moon, Plus, Leaf, Menu, X, Sparkles, 
+  ShoppingBag, Sun, Moon, Plus, Menu, X, Sparkles, 
   Globe2, Phone, CheckCircle, Trash2, AlertCircle, Tag, LogIn, Heart
 } from 'lucide-react';
-import { INITIAL_DB } from './constants';
 import { Product, Language, Database, CompanyInfo, PromoCode, OrderData } from './types';
 import { translations } from './locales';
-import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram';
-import { loadDb, saveDb } from './services/dbService';
+import { getDb } from './services/dbService';
+import { orderService } from './services/orderService';
+// Fix: Added missing import for telegram service
+import { sendContactToTelegram } from './services/telegram';
 import SimoshAI from './components/SimoshAI';
 import AdminPanel from './components/AdminPanel';
 
 type ToastType = 'success' | 'warning' | 'error';
 
-// Mahsulot narxini hisoblash (Discount formatini hisobga olgan holda)
 const getPrice = (product: Product): number => {
   if (product.discount && product.discount.active) {
     const now = new Date();
@@ -45,24 +45,21 @@ export const LanguageContext = createContext<{
 });
 
 export default function App() {
-  const [db, setDb] = useState<Database>(INITIAL_DB);
+  const [db, setDb] = useState<Database | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lang, setLang] = useState<Language>('uz');
   const [isDark, setIsDark] = useState(false);
   const [cart, setCart] = useState<{ product: Product, quantity: number }[]>([]);
   const [toast, setToast] = useState<{ msg: string, type: ToastType } | null>(null);
 
-  useEffect(() => {
-    loadDb().then(data => {
-      setDb(data);
-      setIsLoading(false);
-    });
+  const refreshData = useCallback(async () => {
+    const currentDb = await getDb();
+    setDb(currentDb);
   }, []);
 
-  const syncDb = useCallback(async (newDb: Database) => {
-    setDb(newDb);
-    await saveDb(newDb);
-  }, []);
+  useEffect(() => {
+    refreshData().then(() => setIsLoading(false));
+  }, [refreshData]);
 
   const showToast = (msg: string, type: ToastType = 'success') => {
     setToast({ msg, type });
@@ -82,18 +79,22 @@ export default function App() {
     showToast(translations[lang].cart.added);
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center font-black uppercase text-brand-mint animate-pulse bg-brand-light dark:bg-brand-dark">Simosh Atelier...</div>;
+  if (isLoading || !db) return (
+    <div className="h-screen flex items-center justify-center font-black uppercase text-brand-mint animate-pulse bg-brand-light dark:bg-brand-dark">
+      Simosh Atelier...
+    </div>
+  );
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast }}>
       <Router>
-        <AppContent db={db} cart={cart} setCart={setCart} syncDb={syncDb} addToCart={addToCart} toast={toast} />
+        <AppContent db={db} cart={cart} setCart={setCart} refreshData={refreshData} addToCart={addToCart} toast={toast} />
       </Router>
     </LanguageContext.Provider>
   );
 }
 
-const AppContent = ({ db, cart, setCart, syncDb, addToCart, toast }: any) => {
+const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast }: any) => {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
   const { isDark } = useContext(LanguageContext);
@@ -109,15 +110,8 @@ const AppContent = ({ db, cart, setCart, syncDb, addToCart, toast }: any) => {
             <Route path="/about" element={<AboutView db={db} />} />
             <Route path="/contact" element={<ContactView companyInfo={db.companyInfo} />} />
             <Route path="/ai" element={<SimoshAI products={db.products} />} />
-            <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={(order: any) => {
-               const updatedProducts = db.products.map((p: any) => {
-                  const ordered = order.items.find((item: any) => item.product.id === p.id);
-                  if (ordered) return { ...p, stock: p.stock - ordered.quantity };
-                  return p;
-               });
-              syncDb({ ...db, products: updatedProducts, orders: [...(db.orders || []), order] });
-            }} />} />
-            <Route path="/admin/*" element={<AdminPanel db={db} onUpdate={syncDb} />} />
+            <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={refreshData} />} />
+            <Route path="/admin/*" element={<AdminPanel db={db} onUpdate={refreshData} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -306,7 +300,7 @@ const ContactView = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
   );
 };
 
-const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db: Database, onOrder: (o: OrderData) => void }) => {
+const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db: Database, onOrder: () => void }) => {
   const { t, lang, showToast } = useContext(LanguageContext);
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', comment: '' });
   const [promoInput, setPromoInput] = useState('');
@@ -344,8 +338,12 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
       appliedPromo: appliedPromo?.code,
       discountAmount: calculateDiscount()
     };
-    const success = await sendOrderToTelegram(order);
-    if (success) { onOrder(order); setCart([]); showToast("Buyurtmangiz qabul qilindi!", 'success'); }
+    const success = await orderService.create(order);
+    if (success) { 
+      onOrder(); 
+      setCart([]); 
+      showToast("Buyurtmangiz qabul qilindi!", 'success'); 
+    }
   };
 
   if (cart.length === 0) return (

@@ -28,6 +28,16 @@ export const INITIAL_DB: Database = {
     instagram: "simosh_official",
     telegram: "simosh_admin"
   },
+  users: [
+    {
+      id: "admin-1",
+      email: "akbarovamohinur23@gmail.com",
+      // 'Simosh0906.' paroli uchun SHA-256 hash
+      passwordHash: "8407c089204c356247963b538740f9f600f736021e86a9889423c10a624945d7",
+      role: "ADMIN",
+      name: "Mohinur Akbarova"
+    }
+  ],
   categories: [
     {
       id: 1,

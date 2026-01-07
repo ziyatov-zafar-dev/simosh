@@ -1,4 +1,6 @@
 
+import { Database, User } from '../types';
+
 export const hashPassword = async (password: string): Promise<string> => {
   const msgUint8 = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -6,40 +8,32 @@ export const hashPassword = async (password: string): Promise<string> => {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
-export const ADMIN_CREDENTIALS = {
-  email: 'akbarovamohinur23@gmail.com',
-  // SHA-256 hash for 'Simosh0906.'
-  passwordHash: '8407c089204c356247963b538740f9f600f736021e86a9889423c10a624945d7'
-};
-
-export const getActivePasswordHash = (): string => {
-  return localStorage.getItem('simosh_admin_pwd_hash_v2') || ADMIN_CREDENTIALS.passwordHash;
-};
-
-export const loginAdmin = async (email: string, password: string): Promise<boolean> => {
+export const loginAdmin = async (email: string, password: string, db: Database): Promise<boolean> => {
   const cleanEmail = email.trim().toLowerCase();
   const cleanPassword = password.trim();
-  
   const inputHash = await hashPassword(cleanPassword);
-  const activeHash = getActivePasswordHash();
   
-  // Ma'lumotlar foydalanuvchi bergan login va parolga mos kelishi kerak
-  if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && inputHash === activeHash) {
+  // Ma'lumotlar bazasidagi foydalanuvchilarni tekshirish
+  const user = db.users.find(u => u.email.toLowerCase() === cleanEmail && u.passwordHash === inputHash);
+  
+  if (user) {
     localStorage.setItem('simosh_admin_token_v2', 'session_' + Date.now());
+    localStorage.setItem('simosh_user_data', JSON.stringify(user));
     return true;
   }
   return false;
 };
 
-export const updateAdminPassword = async (newPassword: string): Promise<void> => {
-  const newHash = await hashPassword(newPassword.trim());
-  localStorage.setItem('simosh_admin_pwd_hash_v2', newHash);
-};
-
 export const logoutAdmin = () => {
   localStorage.removeItem('simosh_admin_token_v2');
+  localStorage.removeItem('simosh_user_data');
 };
 
 export const isAdminAuthenticated = (): boolean => {
   return !!localStorage.getItem('simosh_admin_token_v2');
+};
+
+export const getCurrentUser = (): User | null => {
+  const data = localStorage.getItem('simosh_user_data');
+  return data ? JSON.parse(data) : null;
 };

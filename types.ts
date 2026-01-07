@@ -31,13 +31,21 @@ export interface Product {
   categoryId: number;
   stock: number;
   status: 'ACTIVE' | 'INACTIVE';
-  image: string;
+  image: string; // Base64 formatida saqlanadi
   discount?: ProductDiscount;
 }
 
 export interface Category {
   id: number;
   name: LocalizedString;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  role: 'ADMIN' | 'MODERATOR';
+  name: string;
 }
 
 export interface PromoCode {
@@ -92,6 +100,7 @@ export interface Database {
   products: Product[];
   promoCodes: PromoCode[];
   orders: OrderData[];
+  users: User[];
   about: {
     title: LocalizedString;
     content: LocalizedString;
