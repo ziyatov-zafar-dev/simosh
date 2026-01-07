@@ -28,12 +28,15 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setLoginLoading(true);
-      const success = await loginAdmin(email, password);
+      
+      // Trim inputs before sending
+      const success = await loginAdmin(email.trim(), password.trim());
+      
       if (success) {
         setIsAuthenticated(true);
         showToast("Xush kelibsiz, Admin!");
       } else {
-        showToast("Email yoki parol noto'g'ri!");
+        showToast("Email yoki parol noto'g'ri! Qayta urinib ko'ring.");
       }
       setLoginLoading(false);
     };
@@ -50,11 +53,31 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
           </div>
           
           <div className="space-y-4">
-            <input required type="email" placeholder="Email" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={email} onChange={e => setEmail(e.target.value)} />
-            <input required type="password" placeholder="Parol" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={password} onChange={e => setPassword(e.target.value)} />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase opacity-40 ml-2">Email</label>
+              <input 
+                required 
+                type="email" 
+                placeholder="akbarovamohinur23@gmail.com" 
+                className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parol</label>
+              <input 
+                required 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+              />
+            </div>
           </div>
 
-          <button type="submit" disabled={loginLoading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+          <button type="submit" disabled={loginLoading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
             {loginLoading ? <Loader2 className="animate-spin" /> : "Kirish"}
           </button>
         </form>

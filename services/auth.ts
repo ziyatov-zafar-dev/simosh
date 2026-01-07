@@ -8,13 +8,19 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 export const ADMIN_CREDENTIALS = {
   email: 'akbarovamohinur23@gmail.com',
-  // SHA-256 hash of 'Simosh0906.'
+  // 'Simosh0906.' paroli uchun SHA-256 xeshi
   passwordHash: '8407c089204c356247963b538740f9f600f736021e86a9889423c10a624945d7'
 };
 
 export const loginAdmin = async (email: string, password: string): Promise<boolean> => {
-  const inputHash = await hashPassword(password);
-  if (email === ADMIN_CREDENTIALS.email && inputHash === ADMIN_CREDENTIALS.passwordHash) {
+  // Email va paroldan ortiqcha bo'sh joylarni olib tashlaymiz
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPassword = password.trim();
+  
+  const inputHash = await hashPassword(cleanPassword);
+  
+  // Emailni kichik harflarda solishtiramiz
+  if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && inputHash === ADMIN_CREDENTIALS.passwordHash) {
     localStorage.setItem('simosh_admin_token', 'session_' + Date.now());
     return true;
   }
