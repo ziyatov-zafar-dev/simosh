@@ -1,13 +1,14 @@
 
 import React, { useState, useContext, useRef } from 'react';
+import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, LogOut, Trash2, Plus, Edit, X, 
   Check, Ban, Ticket, List, Save, User as UserIcon, Settings, Menu as MenuIcon,
   ShoppingBag, DollarSign, Users, ChevronRight, Moon, Sun, AlertCircle, CheckCircle, ArrowLeft, Loader2, Camera, Upload
 } from 'lucide-react';
 import { LanguageContext } from '../App';
-import { Product, Database, Category, PromoCode, Language } from '../types';
-import { logoutAdmin, isAdminAuthenticated } from '../services/auth';
+import { Product, Database, Category, PromoCode, Language, User } from '../types';
+import { logoutAdmin } from '../services/auth';
 import { userService } from '../services/userService';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
@@ -16,11 +17,18 @@ import { companyService } from '../services/companyService';
 import { orderService } from '../services/orderService';
 import { sendResetRequestToTelegram } from '../services/telegram';
 
-export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: () => void }) {
+interface AdminPanelProps {
+  db: Database;
+  onUpdate: () => void;
+  adminUser: User | null;
+  setAdminUser: (user: User | null) => void;
+}
+
+export default function AdminPanel({ db, onUpdate, adminUser, setAdminUser }: AdminPanelProps) {
   const { showToast, lang: currentLang, isDark, toggleTheme } = useContext(LanguageContext);
-  const [isAuthenticated, setIsAuthenticated] = useState(isAdminAuthenticated());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'products' | 'categories' | 'promos' | 'company'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // Login states
   const [email, setEmail] = useState('');
@@ -33,36 +41,45 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const productFileRef = useRef<HTMLInputElement>(null);
 
-  if (!isAuthenticated) {
+  if (!adminUser) {
     const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setIsLoading(true);
-      const user = await userService.authenticate(email, password);
-      setIsLoading(false);
-      if (user) { 
-        localStorage.setItem('simosh_admin_token_v2', 'session_' + Date.now());
-        localStorage.setItem('simosh_user_data', JSON.stringify(user));
-        setIsAuthenticated(true); 
-        showToast("Xush kelibsiz!", 'success'); 
+      try {
+        const user = await userService.authenticate(email, password);
+        setIsLoading(false);
+        if (user) { 
+          setAdminUser(user);
+          showToast("Xush kelibsiz!", 'success'); 
+        } else {
+          showToast("Email yoki parol noto'g'ri!", 'error');
+        }
+      } catch (err: any) {
+        setIsLoading(false);
+        showToast("Database xatoligi: " + (err.message || "Ulanish muvaffaqiyatsiz"), 'error');
       }
-      else showToast("Email yoki parol noto'g'ri!", 'error');
     };
 
     const handleForgotPassword = async (e: React.FormEvent) => {
       e.preventDefault();
-      const user = await userService.findByEmail(email);
-      if (!user) {
-        showToast("Ushbu email tizimda topilmadi!", 'error');
-        return;
-      }
-      setIsLoading(true);
-      const success = await sendResetRequestToTelegram(email);
-      setIsLoading(false);
-      if (success) {
-        setLoginView('sent');
-        showToast("Tiklash so'rovi Telegram botingizga yuborildi!", 'success');
-      } else {
-        showToast("Xatolik yuz berdi. Bot sozlamalarini tekshiring.", 'error');
+      try {
+        const user = await userService.findByEmail(email);
+        if (!user) {
+          showToast("Ushbu email tizimda topilmadi!", 'error');
+          return;
+        }
+        setIsLoading(true);
+        const success = await sendResetRequestToTelegram(email);
+        setIsLoading(false);
+        if (success) {
+          setLoginView('sent');
+          showToast("Tiklash so'rovi Telegram botingizga yuborildi!", 'success');
+        } else {
+          showToast("Xatolik yuz berdi. Bot sozlamalarini tekshiring.", 'error');
+        }
+      } catch (err: any) {
+        setIsLoading(false);
+        showToast("Database Error: " + err.message, 'error');
       }
     };
 
@@ -129,20 +146,31 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     );
   }
 
+  const handleLogout = () => {
+    logoutAdmin();
+    setAdminUser(null);
+    navigate('/');
+    showToast("Tizimdan chiqdingiz");
+  };
+
   const renderProductModal = () => {
     if (!editingProduct) return null;
     const save = async () => {
-      const p = {
-        ...editingProduct,
-        id: (editingProduct.id || Date.now()).toString(),
-        status: editingProduct.status || 'ACTIVE',
-        currency: 'UZS',
-        sku: editingProduct.sku || `SIM-${Math.floor(Math.random()*1000)}`
-      } as Product;
-      await productService.save(p);
-      onUpdate();
-      setIsModalOpen(false);
-      showToast("Mahsulot muvaffaqiyatli saqlandi!");
+      try {
+        const p = {
+          ...editingProduct,
+          id: (editingProduct.id || Date.now()).toString(),
+          status: editingProduct.status || 'ACTIVE',
+          currency: 'UZS',
+          sku: editingProduct.sku || `SIM-${Math.floor(Math.random()*1000)}`
+        } as Product;
+        await productService.save(p);
+        onUpdate();
+        setIsModalOpen(false);
+        showToast("Mahsulot muvaffaqiyatli saqlandi!");
+      } catch (err: any) {
+        showToast("Saqlashda xatolik: " + err.message, 'error');
+      }
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,12 +252,12 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'orders', label: 'Buyurtmalar', icon: ShoppingBag, count: db.orders.filter(o => o.status === 'PENDING').length },
-    { id: 'products', label: 'Mahsulotlar', icon: Package },
-    { id: 'categories', label: 'Kategoriyalar', icon: List },
-    { id: 'promos', label: 'Promo-kodlar', icon: Ticket },
-    { id: 'company', label: 'Sozlamalar', icon: Settings },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { id: 'orders', label: 'Buyurtmalar', icon: ShoppingBag, count: db.orders.filter(o => o.status === 'PENDING').length, path: '/admin/orders' },
+    { id: 'products', label: 'Mahsulotlar', icon: Package, path: '/admin/products' },
+    { id: 'categories', label: 'Kategoriyalar', icon: List, path: '/admin/categories' },
+    { id: 'promos', label: 'Promo-kodlar', icon: Ticket, path: '/admin/promos' },
+    { id: 'company', label: 'Sozlamalar', icon: Settings, path: '/admin/company' },
   ];
 
   return (
@@ -246,17 +274,18 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
 
           <nav className="flex-1 space-y-3">
             {menuItems.map(item => (
-              <button 
+              <Link 
                 key={item.id} 
-                onClick={() => { setActiveTab(item.id as any); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between p-5 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.15em] transition-all ${activeTab === item.id ? 'bg-brand-mint text-white shadow-lg' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                to={item.path}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`w-full flex items-center justify-between p-5 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.15em] transition-all ${location.pathname === item.path ? 'bg-brand-mint text-white shadow-lg' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}
               >
                 <div className="flex items-center gap-5">
                   <item.icon size={20} />
                   {item.label}
                 </div>
                 {item.count ? <span className="w-6 h-6 flex items-center justify-center rounded-xl bg-white text-brand-mint text-[10px]">{item.count}</span> : <ChevronRight size={14} className="opacity-20" />}
-              </button>
+              </Link>
             ))}
           </nav>
 
@@ -265,7 +294,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                {isDark ? <Sun size={20} /> : <Moon size={20} />}
                {isDark ? 'Yorug' : 'Tungi'}
             </button>
-            <button onClick={() => { logoutAdmin(); setIsAuthenticated(false); }} className="w-full flex items-center gap-5 p-5 rounded-[2rem] font-black uppercase text-[11px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all">
+            <button onClick={handleLogout} className="w-full flex items-center gap-5 p-5 rounded-[2rem] font-black uppercase text-[11px] text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all">
               <LogOut size={20} /> Chiqish
             </button>
           </div>
@@ -275,12 +304,14 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
       <div className="flex-1 lg:ml-80 flex flex-col min-w-0">
         <header className="hidden lg:flex items-center justify-between p-12">
            <div className="animate-in slide-in-from-left-10 duration-700">
-             <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{menuItems.find(m => m.id === activeTab)?.label}</h2>
+             <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">
+                {menuItems.find(m => m.path === location.pathname)?.label || 'Boshqaruv'}
+             </h2>
              <p className="text-sm font-bold opacity-30 uppercase tracking-[0.3em] mt-2">Boshqaruv markaziga xush kelibsiz</p>
            </div>
            <div className="flex items-center gap-8 animate-in slide-in-from-right-10 duration-700">
               <div className="text-right">
-                <p className="font-black text-lg uppercase tracking-tight">Mohinur Akbarova</p>
+                <p className="font-black text-lg uppercase tracking-tight">{adminUser.name}</p>
                 <p className="text-[10px] font-black text-brand-mint uppercase tracking-[0.2em]">Administrator</p>
               </div>
               <div className="w-16 h-16 bg-white dark:bg-white/5 rounded-[1.5rem] flex items-center justify-center text-brand-mint shadow-2xl border border-gray-100 dark:border-white/5 hover:scale-110 transition-transform cursor-pointer"><UserIcon size={28} /></div>
@@ -288,188 +319,192 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
         </header>
 
         <main className="flex-1 p-8 lg:p-12 pt-0 animate-in fade-in duration-1000">
-          {activeTab === 'dashboard' && (
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8">
-               {[
-                  { label: 'Daromad', value: db.orders.filter(o => o.status === 'COMPLETED').reduce((s,o) => s+o.totalPrice, 0).toLocaleString() + ' UZS', icon: DollarSign, color: 'text-brand-mint' },
-                  { label: 'Yangi Buyurtmalar', value: db.orders.filter(o => o.status === 'PENDING').length + ' ta', icon: ShoppingBag, color: 'text-amber-500' },
-                  { label: 'Mijozlar', value: new Set(db.orders.map(o => o.customerPhone)).size + ' ta', icon: Users, color: 'text-blue-500' },
-                  { label: 'Mahsulotlar', value: db.products.length + ' ta', icon: Package, color: 'text-purple-500' },
-               ].map((stat, i) => (
-                 <div key={i} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3.5rem] border border-gray-100 dark:border-white/5 shadow-xl hover:translate-y-[-10px] transition-all">
-                    <div className={`w-14 h-14 bg-gray-50 dark:bg-white/5 ${stat.color} rounded-2xl flex items-center justify-center mb-6 shadow-sm`}><stat.icon size={24} /></div>
-                    <p className="text-[11px] font-black uppercase opacity-30 tracking-widest mb-1">{stat.label}</p>
-                    <h3 className="text-3xl font-black tracking-tight">{stat.value}</h3>
+          <Routes>
+            <Route path="/" element={<Navigate to="dashboard" replace />} />
+            
+            <Route path="dashboard" element={
+              <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8">
+                 {[
+                    { label: 'Daromad', value: db.orders.filter(o => o.status === 'COMPLETED').reduce((s,o) => s+o.totalPrice, 0).toLocaleString() + ' UZS', icon: DollarSign, color: 'text-brand-mint' },
+                    { label: 'Yangi Buyurtmalar', value: db.orders.filter(o => o.status === 'PENDING').length + ' ta', icon: ShoppingBag, color: 'text-amber-500' },
+                    { label: 'Mijozlar', value: new Set(db.orders.map(o => o.customerPhone)).size + ' ta', icon: Users, color: 'text-blue-500' },
+                    { label: 'Mahsulotlar', value: db.products.length + ' ta', icon: Package, color: 'text-purple-500' },
+                 ].map((stat, i) => (
+                   <div key={i} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3.5rem] border border-gray-100 dark:border-white/5 shadow-xl hover:translate-y-[-10px] transition-all">
+                      <div className={`w-14 h-14 bg-gray-50 dark:bg-white/5 ${stat.color} rounded-2xl flex items-center justify-center mb-6 shadow-sm`}><stat.icon size={24} /></div>
+                      <p className="text-[11px] font-black uppercase opacity-30 tracking-widest mb-1">{stat.label}</p>
+                      <h3 className="text-3xl font-black tracking-tight">{stat.value}</h3>
+                   </div>
+                 ))}
+              </div>
+            } />
+
+            <Route path="orders" element={
+              <div className="space-y-10">
+                 {db.orders.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).map(order => (
+                    <div key={order.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-2xl flex flex-col xl:flex-row gap-12 items-start xl:items-center">
+                      <div className="flex-1 space-y-6 w-full">
+                         <div className="flex flex-wrap items-center gap-4">
+                            <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase text-white ${order.status === 'COMPLETED' ? 'bg-brand-mint' : order.status === 'CANCELLED' ? 'bg-rose-500' : 'bg-amber-500'}`}>{order.status}</span>
+                            <span className="text-[11px] font-black opacity-30 uppercase tracking-widest">ID: #{order.id.slice(-6)}</span>
+                         </div>
+                         <div className="grid md:grid-cols-2 gap-12">
+                            <div className="space-y-1">
+                               <p className="text-[10px] font-black uppercase opacity-20 tracking-widest">Mijoz</p>
+                               <h4 className="text-3xl font-black uppercase">{order.firstName} {order.lastName}</h4>
+                               <p className="text-brand-mint font-black text-xl">{order.customerPhone}</p>
+                            </div>
+                            <div className="space-y-3">
+                               {order.items.map((item, idx) => (
+                                 <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 px-5 py-3 rounded-2xl">
+                                    <span className="font-black text-brand-mint">x{item.quantity}</span>
+                                    <span className="text-xs font-black uppercase">{item.product.translations[currentLang].name}</span>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+                      </div>
+                      <div className="flex xl:flex-col items-center gap-8 w-full xl:w-fit pt-8 border-t xl:border-t-0 xl:border-l border-gray-100 dark:border-white/10 xl:pl-12">
+                         <div className="flex-1 xl:text-center">
+                            <p className="text-[10px] font-black uppercase opacity-20 tracking-widest">Jami</p>
+                            <h5 className="text-4xl font-black text-brand-mint whitespace-nowrap">{order.totalPrice.toLocaleString()} UZS</h5>
+                         </div>
+                         <div className="flex gap-4">
+                            {order.status === 'PENDING' && (
+                              <>
+                                <button onClick={() => { orderService.updateStatus(order.id, 'COMPLETED').then(onUpdate) }} className="w-16 h-16 bg-brand-mint text-white rounded-3xl flex items-center justify-center shadow-xl shadow-brand-mint/30"><Check size={28} /></button>
+                                <button onClick={() => { orderService.updateStatus(order.id, 'CANCELLED').then(onUpdate) }} className="w-16 h-16 bg-rose-500 text-white rounded-3xl flex items-center justify-center shadow-xl shadow-rose-500/30"><Ban size={28} /></button>
+                              </>
+                            )}
+                         </div>
+                      </div>
+                    </div>
+                 ))}
+              </div>
+            } />
+
+            <Route path="products" element={
+              <div className="space-y-8">
+                <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-10">
+                  <h3 className="text-5xl font-black uppercase tracking-tighter">Ombor</h3>
+                  <button onClick={() => { setEditingProduct({}); setIsModalOpen(true); }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-xl flex items-center gap-3"><Plus size={20} /> Mahsulot Qo'shish</button>
+                </div>
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-10">
+                  {db.products.map(p => (
+                    <div key={p.id} className="bg-white dark:bg-[#0c1221] p-8 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-xl hover:translate-y-[-10px] transition-all flex flex-col group overflow-hidden">
+                      <div className="relative rounded-[3rem] overflow-hidden aspect-square mb-8 shadow-2xl">
+                        <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute top-6 right-6 flex gap-3">
+                          <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-brand-dark shadow-2xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={20} /></button>
+                          <button onClick={() => { if(confirm('O\'chirilsinmi?')) productService.delete(p.id).then(onUpdate) }} className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-rose-500 shadow-2xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+                        </div>
+                        <div className="absolute bottom-6 left-6 bg-brand-mint text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-2xl">
+                          {p.price.toLocaleString()} UZS
+                        </div>
+                      </div>
+                      <h4 className="text-2xl font-black uppercase tracking-tighter mb-2">{p.translations[currentLang].name}</h4>
+                      <p className="text-[10px] font-black uppercase text-brand-mint tracking-widest opacity-60">SKU: {p.sku}</p>
+                      <p className="text-sm font-medium opacity-40 leading-relaxed line-clamp-2 mt-4">{p.translations[currentLang].description}</p>
+                      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
+                         <span className="text-xs font-black uppercase opacity-30">Zaxira:</span>
+                         <span className={`text-xl font-black ${p.stock < 10 ? 'text-rose-500' : 'text-brand-mint'}`}>{p.stock} ta</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            } />
+
+            <Route path="categories" element={
+              <div className="max-w-4xl space-y-12">
+                 <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-12">
+                    <h3 className="text-5xl font-black uppercase tracking-tighter">Bo'limlar</h3>
+                    <button onClick={() => {
+                      const name = prompt('Yangi kategoriya nomi:');
+                      if(name) {
+                        categoryService.save({ id: Date.now(), name: { uz: name, ru: name, en: name, tr: name } }).then(onUpdate);
+                      }
+                    }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-2xl flex items-center gap-3"><Plus size={18} /> Yangi Qo'shish</button>
                  </div>
-               ))}
-            </div>
-          )}
-
-          {activeTab === 'orders' && (
-            <div className="space-y-10">
-               {db.orders.sort((a,b) => b.createdAt.localeCompare(a.createdAt)).map(order => (
-                  <div key={order.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-2xl flex flex-col xl:flex-row gap-12 items-start xl:items-center">
-                    <div className="flex-1 space-y-6 w-full">
-                       <div className="flex flex-wrap items-center gap-4">
-                          <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase text-white ${order.status === 'COMPLETED' ? 'bg-brand-mint' : order.status === 'CANCELLED' ? 'bg-rose-500' : 'bg-amber-500'}`}>{order.status}</span>
-                          <span className="text-[11px] font-black opacity-30 uppercase tracking-widest">ID: #{order.id.slice(-6)}</span>
-                       </div>
-                       <div className="grid md:grid-cols-2 gap-12">
-                          <div className="space-y-1">
-                             <p className="text-[10px] font-black uppercase opacity-20 tracking-widest">Mijoz</p>
-                             <h4 className="text-3xl font-black uppercase">{order.firstName} {order.lastName}</h4>
-                             <p className="text-brand-mint font-black text-xl">{order.customerPhone}</p>
-                          </div>
-                          <div className="space-y-3">
-                             {order.items.map((item, idx) => (
-                               <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 px-5 py-3 rounded-2xl">
-                                  <span className="font-black text-brand-mint">x{item.quantity}</span>
-                                  <span className="text-xs font-black uppercase">{item.product.translations[currentLang].name}</span>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                    </div>
-                    <div className="flex xl:flex-col items-center gap-8 w-full xl:w-fit pt-8 border-t xl:border-t-0 xl:border-l border-gray-100 dark:border-white/10 xl:pl-12">
-                       <div className="flex-1 xl:text-center">
-                          <p className="text-[10px] font-black uppercase opacity-20 tracking-widest">Jami</p>
-                          <h5 className="text-4xl font-black text-brand-mint whitespace-nowrap">{order.totalPrice.toLocaleString()} UZS</h5>
-                       </div>
-                       <div className="flex gap-4">
-                          {order.status === 'PENDING' && (
-                            <>
-                              <button onClick={() => { orderService.updateStatus(order.id, 'COMPLETED').then(onUpdate) }} className="w-16 h-16 bg-brand-mint text-white rounded-3xl flex items-center justify-center shadow-xl shadow-brand-mint/30"><Check size={28} /></button>
-                              <button onClick={() => { orderService.updateStatus(order.id, 'CANCELLED').then(onUpdate) }} className="w-16 h-16 bg-rose-500 text-white rounded-3xl flex items-center justify-center shadow-xl shadow-rose-500/30"><Ban size={28} /></button>
-                            </>
-                          )}
-                       </div>
-                    </div>
-                  </div>
-               ))}
-            </div>
-          )}
-
-          {activeTab === 'products' && (
-            <div className="space-y-8">
-              <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-10">
-                <h3 className="text-5xl font-black uppercase tracking-tighter">Ombor</h3>
-                <button onClick={() => { setEditingProduct({}); setIsModalOpen(true); }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-xl flex items-center gap-3"><Plus size={20} /> Mahsulot Qo'shish</button>
-              </div>
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-10">
-                {db.products.map(p => (
-                  <div key={p.id} className="bg-white dark:bg-[#0c1221] p-8 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-xl hover:translate-y-[-10px] transition-all flex flex-col group overflow-hidden">
-                    <div className="relative rounded-[3rem] overflow-hidden aspect-square mb-8 shadow-2xl">
-                      <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                      <div className="absolute top-6 right-6 flex gap-3">
-                        <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-brand-dark shadow-2xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={20} /></button>
-                        <button onClick={() => { if(confirm('O\'chirilsinmi?')) productService.delete(p.id).then(onUpdate) }} className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-rose-500 shadow-2xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={20} /></button>
+                 <div className="grid md:grid-cols-2 gap-6">
+                    {db.categories.map(c => (
+                      <div key={c.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3rem] border border-gray-100 dark:border-white/5 shadow-xl flex items-center justify-between group">
+                         <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 bg-brand-mint/10 text-brand-mint rounded-2xl flex items-center justify-center"><List size={22} /></div>
+                            <h4 className="text-2xl font-black uppercase tracking-tight">{c.name[currentLang]}</h4>
+                         </div>
+                         <button onClick={() => categoryService.delete(c.id).then(onUpdate)} className="w-12 h-12 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl transition-all"><Trash2 size={20} /></button>
                       </div>
-                      <div className="absolute bottom-6 left-6 bg-brand-mint text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-2xl">
-                        {p.price.toLocaleString()} UZS
+                    ))}
+                 </div>
+              </div>
+            } />
+
+            <Route path="promos" element={
+              <div className="max-w-4xl space-y-12">
+                 <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-12">
+                    <h3 className="text-5xl font-black uppercase tracking-tighter">Promokodlar</h3>
+                    <button onClick={() => {
+                      const code = prompt('Promokod:');
+                      if(code) {
+                        promoService.save({ 
+                          id: Date.now().toString(), 
+                          code: code.toUpperCase(), 
+                          description: 'Special', 
+                          scope: 'ALL_PRODUCTS', 
+                          discountType: 'PERCENT', 
+                          discountValue: 10, 
+                          status: 'ACTIVE', 
+                          startsAt: new Date().toISOString(), 
+                          endsAt: '2030-12-31' 
+                        }).then(onUpdate);
+                      }
+                    }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-2xl flex items-center gap-3"><Plus size={18} /> Yangi Kod</button>
+                 </div>
+                 <div className="grid md:grid-cols-2 gap-8">
+                    {db.promoCodes.map(p => (
+                      <div key={p.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3.5rem] border border-gray-100 dark:border-white/5 shadow-xl relative overflow-hidden group">
+                         <h4 className="text-4xl font-black text-brand-mint tracking-[0.2em] uppercase mb-6">{p.code}</h4>
+                         <div className="space-y-4">
+                            <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-4">
+                              <span className="text-[10px] font-black uppercase opacity-30">Chegirma</span>
+                              <span className="font-black text-xl">{p.discountType === 'PERCENT' ? `${p.discountValue}%` : `${p.discountValue} UZS`}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[10px] font-black uppercase opacity-30">Holat</span>
+                              <span className="text-brand-mint font-black">{p.status}</span>
+                            </div>
+                         </div>
+                         <div className="flex justify-end mt-8">
+                            <button onClick={() => promoService.delete(p.id).then(onUpdate)} className="p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={20} /></button>
+                         </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+            } />
+
+            <Route path="company" element={
+              <div className="max-w-4xl space-y-12">
+                 <div className="border-b border-gray-100 dark:border-white/5 pb-12">
+                   <h3 className="text-5xl font-black uppercase tracking-tighter">Sozlamalar</h3>
+                 </div>
+                 <div className="bg-white dark:bg-[#0c1221] p-12 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-2xl space-y-12">
+                    <div className="grid md:grid-cols-2 gap-12">
+                      <div className="space-y-3">
+                        <label className="text-[11px] font-black uppercase opacity-40 ml-4 tracking-widest">Nomi</label>
+                        <input className="w-full p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 outline-none font-black text-2xl" value={db.companyInfo.name} onChange={e => { companyService.update({...db.companyInfo, name: e.target.value}).then(onUpdate) }} />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[11px] font-black uppercase opacity-40 ml-4 tracking-widest">Telefon</label>
+                        <input className="w-full p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 outline-none font-black text-2xl" value={db.companyInfo.phone} onChange={e => { companyService.update({...db.companyInfo, phone: e.target.value}).then(onUpdate) }} />
                       </div>
                     </div>
-                    <h4 className="text-2xl font-black uppercase tracking-tighter mb-2">{p.translations[currentLang].name}</h4>
-                    <p className="text-[10px] font-black uppercase text-brand-mint tracking-widest opacity-60">SKU: {p.sku}</p>
-                    <p className="text-sm font-medium opacity-40 leading-relaxed line-clamp-2 mt-4">{p.translations[currentLang].description}</p>
-                    <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
-                       <span className="text-xs font-black uppercase opacity-30">Zaxira:</span>
-                       <span className={`text-xl font-black ${p.stock < 10 ? 'text-rose-500' : 'text-brand-mint'}`}>{p.stock} ta</span>
-                    </div>
-                  </div>
-                ))}
+                    <button onClick={() => showToast("Barcha o'zgarishlar tasdiqlandi!")} className="w-full py-8 gradient-mint text-white rounded-[3rem] font-black uppercase shadow-2xl flex items-center justify-center gap-4 tracking-[0.2em] text-sm"><Save size={24} /> Saqlash</button>
+                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === 'categories' && (
-            <div className="max-w-4xl space-y-12">
-               <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-12">
-                  <h3 className="text-5xl font-black uppercase tracking-tighter">Bo'limlar</h3>
-                  <button onClick={() => {
-                    const name = prompt('Yangi kategoriya nomi:');
-                    if(name) {
-                      categoryService.save({ id: Date.now(), name: { uz: name, ru: name, en: name, tr: name } }).then(onUpdate);
-                    }
-                  }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-2xl flex items-center gap-3"><Plus size={18} /> Yangi Qo'shish</button>
-               </div>
-               <div className="grid md:grid-cols-2 gap-6">
-                  {db.categories.map(c => (
-                    <div key={c.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3rem] border border-gray-100 dark:border-white/5 shadow-xl flex items-center justify-between group">
-                       <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 bg-brand-mint/10 text-brand-mint rounded-2xl flex items-center justify-center"><List size={22} /></div>
-                          <h4 className="text-2xl font-black uppercase tracking-tight">{c.name[currentLang]}</h4>
-                       </div>
-                       <button onClick={() => categoryService.delete(c.id).then(onUpdate)} className="w-12 h-12 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl transition-all"><Trash2 size={20} /></button>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'promos' && (
-            <div className="max-w-4xl space-y-12">
-               <div className="flex justify-between items-end border-b border-gray-100 dark:border-white/5 pb-12">
-                  <h3 className="text-5xl font-black uppercase tracking-tighter">Promokodlar</h3>
-                  <button onClick={() => {
-                    const code = prompt('Promokod:');
-                    if(code) {
-                      promoService.save({ 
-                        id: Date.now().toString(), 
-                        code: code.toUpperCase(), 
-                        description: 'Special', 
-                        scope: 'ALL_PRODUCTS', 
-                        discountType: 'PERCENT', 
-                        discountValue: 10, 
-                        status: 'ACTIVE', 
-                        startsAt: new Date().toISOString(), 
-                        endsAt: '2030-12-31' 
-                      }).then(onUpdate);
-                    }
-                  }} className="px-10 py-5 gradient-mint text-white rounded-[2rem] font-black uppercase text-xs shadow-2xl flex items-center gap-3"><Plus size={18} /> Yangi Kod</button>
-               </div>
-               <div className="grid md:grid-cols-2 gap-8">
-                  {db.promoCodes.map(p => (
-                    <div key={p.id} className="bg-white dark:bg-[#0c1221] p-10 rounded-[3.5rem] border border-gray-100 dark:border-white/5 shadow-xl relative overflow-hidden group">
-                       <h4 className="text-4xl font-black text-brand-mint tracking-[0.2em] uppercase mb-6">{p.code}</h4>
-                       <div className="space-y-4">
-                          <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-4">
-                            <span className="text-[10px] font-black uppercase opacity-30">Chegirma</span>
-                            <span className="font-black text-xl">{p.discountType === 'PERCENT' ? `${p.discountValue}%` : `${p.discountValue} UZS`}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-[10px] font-black uppercase opacity-30">Holat</span>
-                            <span className="text-brand-mint font-black">{p.status}</span>
-                          </div>
-                       </div>
-                       <div className="flex justify-end mt-8">
-                          <button onClick={() => promoService.delete(p.id).then(onUpdate)} className="p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all"><Trash2 size={20} /></button>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'company' && (
-            <div className="max-w-4xl space-y-12">
-               <div className="border-b border-gray-100 dark:border-white/5 pb-12">
-                 <h3 className="text-5xl font-black uppercase tracking-tighter">Sozlamalar</h3>
-               </div>
-               <div className="bg-white dark:bg-[#0c1221] p-12 rounded-[4rem] border border-gray-100 dark:border-white/5 shadow-2xl space-y-12">
-                  <div className="grid md:grid-cols-2 gap-12">
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-black uppercase opacity-40 ml-4 tracking-widest">Nomi</label>
-                      <input className="w-full p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 outline-none font-black text-2xl" value={db.companyInfo.name} onChange={e => { companyService.update({...db.companyInfo, name: e.target.value}).then(onUpdate) }} />
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-black uppercase opacity-40 ml-4 tracking-widest">Telefon</label>
-                      <input className="w-full p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 outline-none font-black text-2xl" value={db.companyInfo.phone} onChange={e => { companyService.update({...db.companyInfo, phone: e.target.value}).then(onUpdate) }} />
-                    </div>
-                  </div>
-                  <button onClick={() => showToast("Barcha o'zgarishlar tasdiqlandi!")} className="w-full py-8 gradient-mint text-white rounded-[3rem] font-black uppercase shadow-2xl flex items-center justify-center gap-4 tracking-[0.2em] text-sm"><Save size={24} /> Saqlash</button>
-               </div>
-            </div>
-          )}
+            } />
+          </Routes>
         </main>
       </div>
 

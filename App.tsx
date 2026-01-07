@@ -5,7 +5,7 @@ import {
   ShoppingBag, Sun, Moon, Plus, Menu, X, Sparkles, 
   Globe2, Phone, CheckCircle, Trash2, AlertCircle, Tag, LogIn, Heart
 } from 'lucide-react';
-import { Product, Language, Database, CompanyInfo, PromoCode, OrderData } from './types';
+import { Product, Language, Database, CompanyInfo, PromoCode, OrderData, User } from './types';
 import { translations } from './locales';
 import { getDb, initDatabase } from './services/dbService';
 import { orderService } from './services/orderService';
@@ -51,24 +51,29 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [cart, setCart] = useState<{ product: Product, quantity: number }[]>([]);
   const [toast, setToast] = useState<{ msg: string, type: ToastType } | null>(null);
+  
+  // Admin session state (No LocalStorage)
+  const [adminUser, setAdminUser] = useState<User | null>(null);
 
   const refreshData = useCallback(async () => {
     try {
       const currentDb = await getDb();
       setDb(currentDb);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch data:", err);
-      setError("Ma'lumotlar bazasiga bog'lanishda xatolik yuz berdi.");
+      setError("MongoDB ma'lumotlarini yuklashda xatolik: " + (err.message || "Ulanish imkonsiz"));
     }
   }, []);
 
   useEffect(() => {
     const startApp = async () => {
       try {
+        setIsLoading(true);
         await initDatabase();
         await refreshData();
-      } catch (err) {
-        setError("MongoDB ulanishi muvaffaqiyatsiz tugadi. Iltimos, ulanishni tekshiring.");
+      } catch (err: any) {
+        console.error("Initialization error:", err);
+        setError("MongoDB ulanishi muvaffaqiyatsiz tugadi: " + (err.message || "Serverga ulanib bo'lmadi"));
       } finally {
         setIsLoading(false);
       }
@@ -95,32 +100,47 @@ export default function App() {
   };
 
   if (error) return (
-    <div className="h-screen flex flex-col items-center justify-center p-10 text-center bg-brand-light dark:bg-brand-dark">
-      <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-6">
-        <AlertCircle size={40} />
+    <div className="h-screen flex flex-col items-center justify-center p-10 text-center bg-brand-light dark:bg-brand-dark animate-in fade-in duration-500">
+      <div className="w-24 h-24 bg-rose-500/10 text-rose-500 rounded-3xl flex items-center justify-center mb-8 shadow-xl">
+        <AlertCircle size={48} />
       </div>
-      <h1 className="text-3xl font-black uppercase text-brand-dark dark:text-white mb-4">Ulanishda Xatolik</h1>
-      <p className="text-rose-500 font-bold max-w-md">{error}</p>
-      <button onClick={() => window.location.reload()} className="mt-8 px-10 py-4 gradient-mint text-white rounded-full font-black uppercase tracking-widest text-sm">Qayta urinish</button>
+      <h1 className="text-4xl font-black uppercase text-brand-dark dark:text-white mb-4 tracking-tighter">Database Error</h1>
+      <div className="bg-rose-50 dark:bg-rose-500/10 p-6 rounded-2xl border border-rose-100 dark:border-rose-500/20 max-w-lg">
+        <p className="text-rose-600 dark:text-rose-400 font-bold leading-relaxed">{error}</p>
+      </div>
+      <p className="mt-6 text-gray-400 text-sm font-medium uppercase tracking-widest">MongoDB serveringiz yoqilganligini tekshiring</p>
+      <button onClick={() => window.location.reload()} className="mt-10 px-12 py-5 gradient-mint text-white rounded-full font-black uppercase tracking-widest text-sm shadow-2xl hover:scale-105 active:scale-95 transition-all">Qayta urinish</button>
     </div>
   );
 
   if (isLoading || !db) return (
-    <div className="h-screen flex items-center justify-center font-black uppercase text-brand-mint animate-pulse bg-brand-light dark:bg-brand-dark">
-      Simosh Atelier Loading...
+    <div className="h-screen flex flex-col items-center justify-center bg-brand-light dark:bg-brand-dark space-y-6">
+      <div className="w-16 h-16 border-4 border-brand-mint border-t-transparent rounded-full animate-spin"></div>
+      <div className="font-black uppercase text-brand-mint tracking-[0.3em] text-sm animate-pulse">
+        Simosh Atelier Connecting...
+      </div>
     </div>
   );
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang], isDark, toggleTheme: () => setIsDark(!isDark), showToast }}>
       <Router>
-        <AppContent db={db} cart={cart} setCart={setCart} refreshData={refreshData} addToCart={addToCart} toast={toast} />
+        <AppContent 
+          db={db} 
+          cart={cart} 
+          setCart={setCart} 
+          refreshData={refreshData} 
+          addToCart={addToCart} 
+          toast={toast}
+          adminUser={adminUser}
+          setAdminUser={setAdminUser}
+        />
       </Router>
     </LanguageContext.Provider>
   );
 }
 
-const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast }: any) => {
+const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast, adminUser, setAdminUser }: any) => {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
   const { isDark } = useContext(LanguageContext);
@@ -137,15 +157,15 @@ const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast }: any) =
             <Route path="/contact" element={<ContactView companyInfo={db.companyInfo} />} />
             <Route path="/ai" element={<SimoshAI products={db.products} />} />
             <Route path="/cart" element={<CartView cart={cart} setCart={setCart} db={db} onOrder={refreshData} />} />
-            <Route path="/admin/*" element={<AdminPanel db={db} onUpdate={refreshData} />} />
+            <Route path="/admin/*" element={<AdminPanel db={db} onUpdate={refreshData} adminUser={adminUser} setAdminUser={setAdminUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
         {toast && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 w-full max-w-lg">
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] px-4 w-full max-w-lg animate-in slide-in-from-top-10">
             <div className={`bg-white/95 dark:bg-brand-dark/95 backdrop-blur-2xl border shadow-2xl ${toast.type === 'warning' ? 'border-amber-500/50' : toast.type === 'error' ? 'border-rose-500/50' : 'border-brand-mint/30'} px-8 py-4 rounded-full flex items-center gap-5 font-black`}>
-              <div className={`w-10 h-10 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
-                {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+              <div className={`w-10 h-10 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-50' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
+                {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} className={toast.type === 'error' ? 'text-rose-500' : 'text-white'} />}
               </div>
               <span className="flex-1 uppercase tracking-wider text-[12px] text-brand-dark dark:text-white">{toast.msg}</span>
             </div>
@@ -156,7 +176,6 @@ const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast }: any) =
   );
 };
 
-// HomeView, ProductsView, etc. components (unchanged)
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
