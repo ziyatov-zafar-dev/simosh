@@ -70,7 +70,7 @@
       "code": "START",
       "type": "FIXED",
       "value": 15000,
-      "expiry_date": "2025-06-01T23:59:59Z",
+      "expiry_date": "2029-06-01T23:59:59Z",
       "is_active": true
     }
   ],
