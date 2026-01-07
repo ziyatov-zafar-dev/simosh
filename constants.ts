@@ -24,7 +24,7 @@ export const INITIAL_DB: Database = {
   },
   categories: [
     {
-      id: "cat_1",
+      id: 1,
       name: {
         uz: "Botanika",
         ru: "Ботаника",
@@ -33,7 +33,7 @@ export const INITIAL_DB: Database = {
       }
     },
     {
-      id: "cat_2",
+      id: 2,
       name: {
         uz: "Efirlar",
         ru: "Эфиры",
@@ -76,7 +76,7 @@ export const INITIAL_DB: Database = {
       is_active: true,
       created_at: "2024-01-08T00:00:00Z",
       image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
-      categoryId: "cat_1"
+      categoryId: 1
     }
   ],
   promoCodes: [

@@ -22,7 +22,7 @@
   },
   "categories": [
     {
-      "id": "cat_1",
+      "id": 1,
       "name": {
         "uz": "Botanika",
         "ru": "Ботаника",
@@ -31,7 +31,7 @@
       }
     },
     {
-      "id": "cat_2",
+      "id": 2,
       "name": {
         "uz": "Efirlar",
         "ru": "Эфиры",
@@ -65,7 +65,7 @@
       "price": 45000,
       "currency": "UZS",
       "image": "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
-      "categoryId": "cat_1",
+      "categoryId": 1,
       "stock": 50,
       "is_active": true,
       "created_at": "2024-01-08T00:00:00Z",

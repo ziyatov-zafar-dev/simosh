@@ -123,7 +123,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     is_active: true,
     created_at: new Date().toISOString(),
     image: '',
-    categoryId: db.categories[0]?.id || ''
+    categoryId: db.categories[0]?.id || 0
   });
 
   const createEmptyPromo = (): GlobalPromoCode => ({
@@ -252,7 +252,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Kategoriya</label>
-                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.categoryId} onChange={e => setEditingProduct({...editingProduct!, categoryId: e.target.value})}>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.categoryId} onChange={e => setEditingProduct({...editingProduct!, categoryId: Number(e.target.value)})}>
                     {db.categories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name.uz}</option>
                     ))}

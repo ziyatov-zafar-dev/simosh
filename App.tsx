@@ -28,14 +28,19 @@ export const LanguageContext = createContext<{
   showToast: () => {}
 });
 
-const isDateActive = (start?: string, end?: string) => {
+// Helper to get current time in Uzbekistan (Asia/Tashkent)
+const getUzbekistanTime = () => {
   const now = new Date();
-  const startDate = start ? new Date(start) : null;
-  const endDate = end ? new Date(end) : null;
+  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tashkent" }));
+};
+
+const isDateActive = (start?: string, end?: string) => {
+  if (!start || !end) return false;
+  const now = getUzbekistanTime();
+  const startDate = new Date(start);
+  const endDate = new Date(end);
   
-  if (startDate && now < startDate) return false;
-  if (endDate && now > endDate) return false;
-  return true;
+  return now >= startDate && now <= endDate;
 };
 
 const getEffectivePrice = (product: Product) => {
@@ -85,20 +90,22 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
         </div>
         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
-        <div className="pt-2 md:pt-4 min-h-[70px] md:min-h-[80px]">
-          {!isConfiguring ? (
-            <div className="flex items-center justify-between">
+        <div className="pt-2 md:pt-4 min-h-[90px] md:min-h-[100px] flex flex-col justify-end">
+          {/* Price display - always visible */}
+          <div className="flex flex-col mb-3">
+            <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
+            {activeDiscount ? (
               <div className="flex flex-col">
-                <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
-                {activeDiscount ? (
-                  <div className="flex flex-col">
-                    <span className="text-sm line-through opacity-40">{product.price.toLocaleString()} {product.currency}</span>
-                    <span className="text-xl md:text-2xl font-black text-rose-500">{effectivePrice.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
-                  </div>
-                ) : (
-                  <span className="text-xl md:text-2xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
-                )}
+                <span className="text-xs line-through opacity-40 leading-none">{product.price.toLocaleString()} {product.currency}</span>
+                <span className="text-xl md:text-2xl font-black text-rose-500 leading-tight">{effectivePrice.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
               </div>
+            ) : (
+              <span className="text-xl md:text-2xl font-black text-brand-mint leading-tight">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
+            )}
+          </div>
+
+          {!isConfiguring ? (
+            <div className="flex items-center justify-end">
               <button 
                 onClick={() => setIsConfiguring(true)} 
                 className={`w-12 h-12 md:w-14 md:h-14 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
@@ -123,12 +130,20 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
                   <Plus size={14} />
                 </button>
               </div>
-              <button 
-                onClick={handleAddClick}
-                className="w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <ShoppingBag size={14} /> {t.cart.add}
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setIsConfiguring(false)}
+                  className="px-4 py-3 md:py-4 bg-gray-200 dark:bg-white/10 text-brand-dark dark:text-white rounded-xl md:rounded-2xl font-black text-[10px] transition-all"
+                >
+                  <X size={14} />
+                </button>
+                <button 
+                  onClick={handleAddClick}
+                  className="flex-1 py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag size={14} /> {t.cart.add}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -265,7 +280,6 @@ export default function App() {
     
     try {
       const parsed = JSON.parse(saved);
-      // Robust Migration: Always ensure default keys exist and have content if needed
       return {
         ...INITIAL_DB,
         ...parsed,
@@ -503,7 +517,6 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
   
-  // Promo code states
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<GlobalPromoCode | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -525,7 +538,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     const inputCode = promoInput.trim().toUpperCase();
     if (!inputCode) return;
 
-    // Direct match check on the provided promoCodes list
+    // Search in current props
     const code = (promoCodes || []).find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
     
     if (!code) {
@@ -534,8 +547,11 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
       return;
     }
 
-    const isExpired = new Date() > new Date(code.expiry_date);
-    if (!code.is_active || isExpired) {
+    // Check expiry using Asia/Tashkent time
+    const now = getUzbekistanTime();
+    const expiryDate = new Date(code.expiry_date);
+    
+    if (!code.is_active || now > expiryDate) {
       setPromoError(lang === 'uz' ? "Promo-kod muddati o'tgan yoki faol emas!" : "Promo code expired or inactive!");
       setAppliedPromo(null);
       return;
@@ -560,7 +576,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     });
     if (success) {
       setCart([]);
-      showToast("Buyurtmangiz qabul qilindi!");
+      showToast(lang === 'uz' ? "Buyurtmangiz qabul qilindi!" : "Your order has been received!");
     }
   };
 
@@ -607,7 +623,6 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
           })}
         </div>
 
-        {/* Promo Code Input Section */}
         <div className="bg-white dark:bg-white/5 p-5 md:p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
           <label className="text-xs font-black uppercase opacity-40 ml-2">Promo-kod</label>
           <div className="flex gap-3">

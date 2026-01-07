@@ -25,7 +25,7 @@ export interface GlobalPromoCode {
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: LocalizedString;
 }
 
@@ -40,7 +40,7 @@ export interface Product {
   is_active: boolean;
   created_at: string;
   image: string;
-  categoryId: string;
+  categoryId: number;
 }
 
 export interface CompanyInfo {
