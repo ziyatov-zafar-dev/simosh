@@ -3,88 +3,135 @@ import React, { useState, useEffect, useContext } from 'react';
 import { 
   LayoutDashboard, Package, Building2, Info, LogOut, 
   Plus, Edit, Trash2, Save, X, Image as ImageIcon,
-  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket
+  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket, KeyRound, ArrowLeft
 } from 'lucide-react';
 import { LanguageContext } from '../App';
 import { Product, CompanyInfo, Database, Language, GlobalPromoCode, Category } from '../types';
-import { loginAdmin, logoutAdmin, isAdminAuthenticated } from '../services/auth';
+import { loginAdmin, logoutAdmin, isAdminAuthenticated, updateAdminPassword } from '../services/auth';
 
 export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (newDb: Database) => void }) {
   const { lang, t, showToast } = useContext(LanguageContext);
   const [isAuthenticated, setIsAuthenticated] = useState(isAdminAuthenticated());
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promos' | 'company' | 'about'>('dashboard');
   
+  // Login States
+  const [view, setView] = useState<'login' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  // Admin States
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
-  
   const [editingPromo, setEditingPromo] = useState<GlobalPromoCode | null>(null);
   const [isAddingPromo, setIsAddingPromo] = useState(false);
 
   if (!isAuthenticated) {
     const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
-      setLoginLoading(true);
-      
-      // Trim inputs before sending
-      const success = await loginAdmin(email.trim(), password.trim());
-      
+      setLoading(true);
+      const success = await loginAdmin(email, password);
       if (success) {
         setIsAuthenticated(true);
         showToast("Xush kelibsiz, Admin!");
       } else {
-        showToast("Email yoki parol noto'g'ri! Qayta urinib ko'ring.");
+        showToast("Email yoki parol noto'g'ri!");
       }
-      setLoginLoading(false);
+      setLoading(false);
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newPassword !== confirmPassword) {
+        showToast("Parollar mos kelmadi!");
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast("Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
+        return;
+      }
+
+      setLoading(true);
+      await updateAdminPassword(newPassword);
+      showToast("Parol muvaffaqiyatli yangilandi!");
+      setView('login');
+      setPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setLoading(false);
     };
 
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-6">
-        <form onSubmit={handleLogin} className="w-full max-w-md bg-white dark:bg-white/5 p-8 md:p-12 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 space-y-6 animate-in fade-in zoom-in duration-500">
-          <div className="text-center space-y-2 mb-8">
-            <div className="w-20 h-20 bg-brand-mint/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Building2 className="text-brand-mint w-10 h-10" />
-            </div>
-            <h2 className="text-3xl font-black uppercase tracking-tight">Admin Login</h2>
-            <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Simosh Atelier Boshqaruvi</p>
-          </div>
+        <div className="w-full max-w-md bg-white dark:bg-white/5 p-8 md:p-12 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 animate-in fade-in zoom-in duration-500">
           
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase opacity-40 ml-2">Email</label>
-              <input 
-                required 
-                type="email" 
-                placeholder="akbarovamohinur23@gmail.com" 
-                className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parol</label>
-              <input 
-                required 
-                type="password" 
-                placeholder="••••••••" 
-                className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-              />
-            </div>
-          </div>
+          {view === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="text-center space-y-2 mb-8">
+                <div className="w-20 h-20 bg-brand-mint/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="text-brand-mint w-10 h-10" />
+                </div>
+                <h2 className="text-3xl font-black uppercase tracking-tight">Admin Login</h2>
+                <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Simosh Atelier Boshqaruvi</p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Email</label>
+                  <input required type="email" placeholder="email@example.com" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={email} onChange={e => setEmail(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parol</label>
+                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={password} onChange={e => setPassword(e.target.value)} />
+                </div>
+              </div>
 
-          <button type="submit" disabled={loginLoading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
-            {loginLoading ? <Loader2 className="animate-spin" /> : "Kirish"}
-          </button>
-        </form>
+              <button type="submit" disabled={loading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+                {loading ? <Loader2 className="animate-spin" /> : "Kirish"}
+              </button>
+
+              <button type="button" onClick={() => setView('forgot')} className="w-full text-center text-xs font-black uppercase tracking-widest text-gray-400 hover:text-brand-mint transition-colors">
+                Parolni unutdingizmi?
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword} className="space-y-6">
+              <div className="text-center space-y-2 mb-8">
+                <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <KeyRound className="text-amber-500 w-10 h-10" />
+                </div>
+                <h2 className="text-3xl font-black uppercase tracking-tight">Parolni tiklash</h2>
+                <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Yangi parol o'rnating</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Yangi parol</label>
+                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parolni tasdiqlash</label>
+                  <input required type="password" placeholder="••••••••" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
+                {loading ? <Loader2 className="animate-spin" /> : "Parolni yangilash"}
+              </button>
+
+              <button type="button" onClick={() => setView('login')} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-brand-dark dark:hover:text-white transition-colors">
+                <ArrowLeft size={14} /> Ortga qaytish
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     );
   }
 
+  // Admin Dashboard Content...
   const handleLogout = () => {
     logoutAdmin();
     setIsAuthenticated(false);

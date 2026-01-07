@@ -8,23 +8,34 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 export const ADMIN_CREDENTIALS = {
   email: 'akbarovamohinur23@gmail.com',
-  // 'Simosh0906.' paroli uchun SHA-256 xeshi
+  // Standart 'Simosh0906.' paroli uchun SHA-256 xeshi
   passwordHash: '8407c089204c356247963b538740f9f600f736021e86a9889423c10a624945d7'
 };
 
+/**
+ * Hozirgi faol parol xeshini qaytaradi (localStorage yoki standart)
+ */
+export const getActivePasswordHash = (): string => {
+  return localStorage.getItem('simosh_admin_pwd_hash') || ADMIN_CREDENTIALS.passwordHash;
+};
+
 export const loginAdmin = async (email: string, password: string): Promise<boolean> => {
-  // Email va paroldan ortiqcha bo'sh joylarni olib tashlaymiz
   const cleanEmail = email.trim().toLowerCase();
   const cleanPassword = password.trim();
   
   const inputHash = await hashPassword(cleanPassword);
+  const activeHash = getActivePasswordHash();
   
-  // Emailni kichik harflarda solishtiramiz
-  if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && inputHash === ADMIN_CREDENTIALS.passwordHash) {
+  if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && inputHash === activeHash) {
     localStorage.setItem('simosh_admin_token', 'session_' + Date.now());
     return true;
   }
   return false;
+};
+
+export const updateAdminPassword = async (newPassword: string): Promise<void> => {
+  const newHash = await hashPassword(newPassword.trim());
+  localStorage.setItem('simosh_admin_pwd_hash', newHash);
 };
 
 export const logoutAdmin = () => {
