@@ -22,50 +22,56 @@
   },
   "products": [
     {
-      "id": "1",
-      "name": {
-        "uz": "Lavanda Shifosi",
-        "ru": "Лавандовое Исцеление",
-        "en": "Lavender Healing",
-        "tr": "Lavanta Şifası"
-      },
-      "description": {
-        "uz": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun. Stressni kamaytiradi.",
-        "ru": "Натуральное мыло, обогащенное успокаивающим маслом лаванды. Снимает стресс.",
-        "en": "Natural soap enriched with soothing lavender oil. Reduces stress.",
-        "tr": "Sakinleştirici lavanta yağı ile zenginleştirilmiş doğal sabun. Stresi azaltır."
+      "id": 101,
+      "sku": "SIM-001",
+      "translations": {
+        "uz": {
+          "name": "Lavanda Shifosi",
+          "description": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun. Stressni kamaytiradi."
+        },
+        "ru": {
+          "name": "Лавандовое Исцеление",
+          "description": "Натуральное мыло, обогащенное успокаивающим маслом лаванды. Снимает стресс."
+        },
+        "en": {
+          "name": "Lavender Healing",
+          "description": "Natural soap enriched with soothing lavender oil. Reduces stress."
+        },
+        "tr": {
+          "name": "Lavanta Şifası",
+          "description": "Sakinleştirici lavanta yağı ile zenginleştirilmiş doğal sabun. Stresi azaltır."
+        }
       },
       "price": 45000,
+      "currency": "UZS",
       "image": "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
       "category": {
         "uz": "Botanika",
         "ru": "Ботаника",
         "en": "Botanical",
         "tr": "Botanik"
-      }
+      },
+      "stock": 50,
+      "is_active": true,
+      "created_at": "2024-01-08T00:00:00Z"
+    }
+  ],
+  "promoCodes": [
+    {
+      "id": "1",
+      "code": "SIMOSH2025",
+      "type": "PERCENT",
+      "value": 10,
+      "expiry_date": "2025-12-31T23:59:59Z",
+      "is_active": true
     },
     {
       "id": "2",
-      "name": {
-        "uz": "Asal va Sut",
-        "ru": "Мед и Молоко",
-        "en": "Honey & Milk",
-        "tr": "Bal ve Süt"
-      },
-      "description": {
-        "uz": "Teringizni yumshoq va namlangan holda saqlovchi klassik kombinatsiya.",
-        "ru": "Классическое сочетание, сохраняющее вашу кожу мягкой и увлажненной.",
-        "en": "A classic combination that keeps your skin soft and hydrated.",
-        "tr": "Cildinizi yumuşak ve nemli tutan klasik bir kombinasyon."
-      },
-      "price": 38000,
-      "image": "https://images.unsplash.com/photo-1546931457-3f895c12792e?auto=format&fit=crop&q=80&w=800",
-      "category": {
-        "uz": "Oziqlantiruvchi",
-        "ru": "Питательное",
-        "en": "Nourishing",
-        "tr": "Besleyici"
-      }
+      "code": "START",
+      "type": "FIXED",
+      "value": 15000,
+      "expiry_date": "2025-06-01T23:59:59Z",
+      "is_active": true
     }
   ],
   "about": {

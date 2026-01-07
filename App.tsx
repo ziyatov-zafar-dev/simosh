@@ -481,7 +481,7 @@ const ContactPage = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
   );
 };
 
-const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
+const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, setCart: any, onUpdateQty: any, promoCodes: GlobalPromoCode[] }) => {
   const { t, lang, showToast } = useContext(LanguageContext);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -507,22 +507,26 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
 
   const handleApplyPromo = () => {
     setPromoError(null);
-    const code = promoCodes.find((p: GlobalPromoCode) => p.code.toUpperCase() === promoInput.toUpperCase());
+    if (!promoInput.trim()) return;
+
+    // Use current promoCodes from DB
+    const code = promoCodes.find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === promoInput.trim().toUpperCase());
     
     if (!code) {
-      setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas" : "Promo code not found");
+      setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas!" : "Promo code not found!");
       setAppliedPromo(null);
       return;
     }
 
     const isExpired = new Date() > new Date(code.expiry_date);
     if (!code.is_active || isExpired) {
-      setPromoError(lang === 'uz' ? "Promo-kod muddati o'tgan yoki faol emas" : "Promo code expired or inactive");
+      setPromoError(lang === 'uz' ? "Promo-kod muddati o'tgan yoki faol emas!" : "Promo code expired or inactive!");
       setAppliedPromo(null);
       return;
     }
 
     setAppliedPromo(code);
+    setPromoError(null);
     showToast(lang === 'uz' ? "Promo-kod muvaffaqiyatli qo'llanildi!" : "Promo code applied successfully!");
   };
 
@@ -594,12 +598,15 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
             <div className="flex-1 relative">
               <input 
                 value={promoInput} 
-                onChange={e => setPromoInput(e.target.value)} 
+                onChange={e => {
+                  setPromoInput(e.target.value);
+                  if (promoError) setPromoError(null);
+                }} 
                 className={`w-full p-4 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest border transition-all ${promoError ? 'border-rose-500 bg-rose-50 dark:bg-rose-500/5' : 'border-transparent focus:border-brand-mint'}`} 
                 placeholder="PROMO2025" 
               />
               {promoError && (
-                <div className="absolute -bottom-6 left-2 flex items-center gap-1 text-[10px] text-rose-500 font-bold">
+                <div className="absolute -bottom-6 left-2 flex items-center gap-1 text-[10px] text-rose-500 font-bold animate-in slide-in-from-top-1">
                   <AlertCircle size={10} /> {promoError}
                 </div>
               )}
@@ -614,12 +621,17 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
           {appliedPromo && (
             <div className="flex items-center justify-between p-3 bg-brand-mint/10 rounded-xl border border-brand-mint/20 text-brand-mint animate-in zoom-in duration-300">
                <div className="flex items-center gap-2">
-                 <Tag size={16} />
-                 <span className="text-sm font-black uppercase tracking-widest">{appliedPromo.code}</span>
+                 <div className="w-8 h-8 bg-brand-mint/20 rounded-lg flex items-center justify-center">
+                    <Tag size={16} />
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase opacity-60">Qo'llanilgan kod</span>
+                    <span className="text-sm font-black uppercase tracking-widest">{appliedPromo.code}</span>
+                 </div>
                </div>
-               <div className="flex items-center gap-3">
-                 <span className="text-xs font-bold">-{appliedPromo.type === 'PERCENT' ? `${appliedPromo.value}%` : `${appliedPromo.value.toLocaleString()} so'm`}</span>
-                 <button onClick={() => { setAppliedPromo(null); setPromoInput(''); }} className="hover:text-rose-500 transition-colors">
+               <div className="flex items-center gap-4">
+                 <span className="text-sm font-black bg-brand-mint text-white px-2 py-1 rounded-md">-{appliedPromo.type === 'PERCENT' ? `${appliedPromo.value}%` : `${appliedPromo.value.toLocaleString()} so'm`}</span>
+                 <button onClick={() => { setAppliedPromo(null); setPromoInput(''); }} className="w-8 h-8 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-full transition-colors">
                    <X size={16} />
                  </button>
                </div>
@@ -627,14 +639,14 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes }: any) => {
           )}
         </div>
 
-        <div className="pt-6 md:pt-8 space-y-4">
+        <div className="pt-6 md:pt-8 space-y-4 bg-gray-50 dark:bg-white/5 p-6 rounded-[2rem] border border-gray-100 dark:border-white/5">
            <div className="flex justify-between items-center text-sm font-bold opacity-40">
              <span>Summa:</span>
              <span>{subtotal.toLocaleString()} {cart[0]?.product.currency}</span>
            </div>
            {appliedPromo && (
              <div className="flex justify-between items-center text-sm font-bold text-rose-500">
-               <span>Promo-kod chegirmasi:</span>
+               <span className="flex items-center gap-2"><Tag size={14} /> Promo-kod chegirmasi:</span>
                <span>-{calculateDiscount().toLocaleString()} {cart[0]?.product.currency}</span>
              </div>
            )}

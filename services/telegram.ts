@@ -51,29 +51,59 @@ ${contact.message}
 };
 
 async function sendMessage(text: string) {
+  const MAX_LENGTH = 4000; // Telegram limit is 4096, using 4000 for safety
+  const chunks: string[] = [];
+  
+  if (text.length <= MAX_LENGTH) {
+    chunks.push(text);
+  } else {
+    let remainingText = text;
+    while (remainingText.length > 0) {
+      if (remainingText.length <= MAX_LENGTH) {
+        chunks.push(remainingText);
+        break;
+      }
+      
+      // Try to find the last newline within the limit to avoid cutting in middle of a tag or word
+      let splitIndex = remainingText.lastIndexOf('\n', MAX_LENGTH);
+      if (splitIndex <= 0) {
+        splitIndex = MAX_LENGTH; // Fallback if no newline found
+      }
+      
+      chunks.push(remainingText.substring(0, splitIndex).trim());
+      remainingText = remainingText.substring(splitIndex).trim();
+    }
+  }
+
   try {
     const results = await Promise.all(
       CHAT_IDS.map(async (chatId) => {
-        try {
-          const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: text,
-              parse_mode: 'HTML'
-            })
-          });
-          return response.ok;
-        } catch (err) {
-          console.error("Telegram send error:", err);
-          return false;
+        let success = true;
+        // Send chunks sequentially for each chat ID
+        for (const chunk of chunks) {
+          try {
+            const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: chunk,
+                parse_mode: 'HTML'
+              })
+            });
+            if (!response.ok) success = false;
+          } catch (err) {
+            console.error("Telegram individual chunk error:", err);
+            success = false;
+          }
         }
+        return success;
       })
     );
+    // Return true if at least one admin received all parts
     return results.some(res => res === true);
   } catch (error) {
-    console.error("Telegram service error:", error);
+    console.error("Telegram service overall error:", error);
     return false;
   }
 }
