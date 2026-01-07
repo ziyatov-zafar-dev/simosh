@@ -1,0 +1,39 @@
+
+{
+  "companyInfo": {
+    "name": "Simosh",
+    "description": "Tabiiy va sifatli sovunlar ishlab chiqaruvchi yetakchi brend. Bizning mahsulotlarimiz teringiz uchun eng yaxshi g'amxo'rlikni ta'minlaydi.",
+    "phone": "+998 90 123 45 67",
+    "email": "info@simosh.uz",
+    "address": "Toshkent shahri, Chilonzor tumani",
+    "instagram": "simosh_official",
+    "telegram": "simosh_admin"
+  },
+  "products": [
+    {
+      "id": "1",
+      "name": "Lavanda Shifosi",
+      "description": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun.",
+      "price": 25000,
+      "image": "https://picsum.photos/seed/soap1/400/400",
+      "category": "Sovunlar"
+    },
+    {
+      "id": "2",
+      "name": "Asal va Sut",
+      "description": "Teringizni yumshoq va namlangan holda saqlovchi klassik kombinatsiya.",
+      "price": 22000,
+      "image": "https://picsum.photos/seed/soap2/400/400",
+      "category": "Sovunlar"
+    }
+  ],
+  "about": {
+    "title": "Biz haqimizda",
+    "content": "Simosh kompaniyasi 2023-yilda tashkil etilgan bo'lib, asosiy maqsadimiz aholiga butunlay tabiiy va kimyoviy qo'shimchalarsiz sovunlarni taqdim etishdir.",
+    "image": "https://picsum.photos/seed/factory/800/600"
+  },
+  "admin": {
+    "email": "akbarovamohinur23@gmail.com",
+    "password": "Simosh0906."
+  }
+}

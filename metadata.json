@@ -1,0 +1,7 @@
+{
+  "name": "Simosh - Premium Soaps",
+  "description": "Exclusive soap products with integrated Simosh AI for product consultation and order management.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

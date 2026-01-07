@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simosh — Botanical Atelier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              // Non-white Light Mode (Warm Linen/Sand)
+              // Non-black Dark Mode (Deep Midnight/Charcoal)
+              atelier: {
+                50: '#FDFBF7', // Linen Light
+                100: '#F7F3EB', 
+                200: '#EDE4D5', 
+                300: '#DCC8AD', 
+                400: '#C5A987', 
+                500: '#B18E66', 
+                600: '#9E7754', 
+                700: '#846247', 
+                800: '#6C513E', 
+                900: '#1D1E20', // Deep Charcoal
+                950: '#121315', // Midnight Slate
+              },
+              accent: {
+                // A vibrant, modern botanical green
+                400: '#64D28D',
+                500: '#34D399',
+                600: '#059669',
+              }
+            },
+            fontFamily: {
+              sans: ['"Outfit"', 'sans-serif'],
+              serif: ['"Cormorant Garamond"', 'serif'],
+            },
+            boxShadow: {
+              'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.04)',
+              'luxury': '0 30px 60px -12px rgba(0, 0, 0, 0.12)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        * {
+          transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.3s ease, color 0.3s ease;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .glass-nav {
+          background: rgba(253, 251, 247, 0.7);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+        }
+        .dark .glass-nav {
+          background: rgba(29, 30, 32, 0.7);
+        }
+        .modern-gradient {
+          background: linear-gradient(135deg, #1D1E20 0%, #B18E66 100%);
+        }
+        .dark .modern-gradient {
+          background: linear-gradient(135deg, #FDFBF7 0%, #34D399 100%);
+        }
+        ::selection {
+          background: #B18E66;
+          color: white;
+        }
+        .dark ::selection {
+          background: #34D399;
+          color: #121315;
+        }
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #B18E66;
+          border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+          background: #34D399;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+<body class="bg-atelier-50 dark:bg-atelier-950 text-atelier-900 dark:text-atelier-50 selection:bg-accent-500/30 overflow-x-hidden">
+    <div id="root"></div>
+</body>
+</html>
