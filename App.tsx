@@ -7,9 +7,8 @@ import {
 } from 'lucide-react';
 import { Product, Language, Database, CompanyInfo, PromoCode, OrderData } from './types';
 import { translations } from './locales';
-import { getDb } from './services/dbService';
+import { getDb, initDatabase } from './services/dbService';
 import { orderService } from './services/orderService';
-// Fix: Added missing import for telegram service
 import { sendContactToTelegram } from './services/telegram';
 import SimoshAI from './components/SimoshAI';
 import AdminPanel from './components/AdminPanel';
@@ -47,18 +46,34 @@ export const LanguageContext = createContext<{
 export default function App() {
   const [db, setDb] = useState<Database | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<Language>('uz');
   const [isDark, setIsDark] = useState(false);
   const [cart, setCart] = useState<{ product: Product, quantity: number }[]>([]);
   const [toast, setToast] = useState<{ msg: string, type: ToastType } | null>(null);
 
   const refreshData = useCallback(async () => {
-    const currentDb = await getDb();
-    setDb(currentDb);
+    try {
+      const currentDb = await getDb();
+      setDb(currentDb);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+      setError("Ma'lumotlar bazasiga bog'lanishda xatolik yuz berdi.");
+    }
   }, []);
 
   useEffect(() => {
-    refreshData().then(() => setIsLoading(false));
+    const startApp = async () => {
+      try {
+        await initDatabase();
+        await refreshData();
+      } catch (err) {
+        setError("MongoDB ulanishi muvaffaqiyatsiz tugadi. Iltimos, ulanishni tekshiring.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    startApp();
   }, [refreshData]);
 
   const showToast = (msg: string, type: ToastType = 'success') => {
@@ -79,9 +94,20 @@ export default function App() {
     showToast(translations[lang].cart.added);
   };
 
+  if (error) return (
+    <div className="h-screen flex flex-col items-center justify-center p-10 text-center bg-brand-light dark:bg-brand-dark">
+      <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-6">
+        <AlertCircle size={40} />
+      </div>
+      <h1 className="text-3xl font-black uppercase text-brand-dark dark:text-white mb-4">Ulanishda Xatolik</h1>
+      <p className="text-rose-500 font-bold max-w-md">{error}</p>
+      <button onClick={() => window.location.reload()} className="mt-8 px-10 py-4 gradient-mint text-white rounded-full font-black uppercase tracking-widest text-sm">Qayta urinish</button>
+    </div>
+  );
+
   if (isLoading || !db) return (
     <div className="h-screen flex items-center justify-center font-black uppercase text-brand-mint animate-pulse bg-brand-light dark:bg-brand-dark">
-      Simosh Atelier...
+      Simosh Atelier Loading...
     </div>
   );
 
@@ -130,6 +156,7 @@ const AppContent = ({ db, cart, setCart, refreshData, addToCart, toast }: any) =
   );
 };
 
+// HomeView, ProductsView, etc. components (unchanged)
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);

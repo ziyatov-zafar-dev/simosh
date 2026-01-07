@@ -1,33 +1,35 @@
-
 import { User } from '../types';
-import { getDb, updateDb } from './dbService';
+import { getDbInstance } from './dbService';
 import { hashPassword } from './auth';
 
 export const userService = {
-  getAll: async () => {
-    const db = await getDb();
-    return db.users;
+  getAll: async (): Promise<User[]> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('users').find({}).toArray();
   },
   
-  findByEmail: async (email: string) => {
-    const db = await getDb();
-    return db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  findByEmail: async (email: string): Promise<User | null> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('users').findOne({ email: email.toLowerCase() });
   },
   
   create: async (user: User) => {
-    const db = await getDb();
-    const newUsers = [...db.users, user];
-    await updateDb({ ...db, users: newUsers });
+    const db = await getDbInstance();
+    await db.collection('users').insertOne(user);
     return user;
   },
   
-  authenticate: async (email: string, password: string) => {
-    const db = await getDb();
+  authenticate: async (email: string, password: string): Promise<User | null> => {
+    const db = await getDbInstance();
     const inputHash = await hashPassword(password);
-    const user = db.users.find(u => 
-      u.email.toLowerCase() === email.toLowerCase() && 
-      u.passwordHash === inputHash
-    );
-    return user || null;
+    // @ts-ignore
+    const user = await db.collection('users').findOne({ 
+      email: email.toLowerCase(), 
+      passwordHash: inputHash 
+    });
+    // Fix: Cast to unknown first as WithId<Document> and User do not sufficiently overlap (id vs _id)
+    return user as unknown as User | null;
   }
 };

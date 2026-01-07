@@ -1,36 +1,40 @@
 
 import { OrderData } from '../types';
-import { getDb, updateDb } from './dbService';
+import { getDbInstance } from './dbService';
 import { sendOrderToTelegram } from './telegram';
 
 export const orderService = {
-  getAll: async () => {
-    const db = await getDb();
-    return db.orders;
+  getAll: async (): Promise<OrderData[]> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('orders').find({}).sort({ createdAt: -1 }).toArray();
   },
   
   create: async (order: OrderData) => {
-    const db = await getDb();
+    const db = await getDbInstance();
     
-    // Telegramga yuborish
+    // Telegramga xabar yuborish
     const tgSuccess = await sendOrderToTelegram(order);
     
-    // Zaxirani yangilash
-    const newProducts = db.products.map(p => {
-      const item = order.items.find(i => i.product.id === p.id);
-      if (item) return { ...p, stock: p.stock - item.quantity };
-      return p;
-    });
+    // DBga buyurtmani saqlash
+    await db.collection('orders').insertOne(order);
     
-    const newOrders = [...db.orders, order];
-    await updateDb({ ...db, orders: newOrders, products: newProducts });
+    // Zaxirani (stock) kamaytirish
+    for (const item of order.items) {
+      await db.collection('products').updateOne(
+        { id: item.product.id },
+        { $inc: { stock: -item.quantity } }
+      );
+    }
     
     return tgSuccess;
   },
   
   updateStatus: async (orderId: string, status: OrderData['status']) => {
-    const db = await getDb();
-    const newOrders = db.orders.map(o => o.id === orderId ? { ...o, status } : o);
-    await updateDb({ ...db, orders: newOrders });
+    const db = await getDbInstance();
+    await db.collection('orders').updateOne(
+      { id: orderId },
+      { $set: { status } }
+    );
   }
 };

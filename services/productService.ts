@@ -1,35 +1,32 @@
 
-import { Product, Database } from '../types';
-import { getDb, updateDb } from './dbService';
+import { Product } from '../types';
+import { getDbInstance } from './dbService';
 
 export const productService = {
-  getAll: async () => {
-    const db = await getDb();
-    return db.products;
+  getAll: async (): Promise<Product[]> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('products').find({}).toArray();
   },
   
-  getById: async (id: string) => {
-    const db = await getDb();
-    return db.products.find(p => p.id === id);
+  getById: async (id: string): Promise<Product | null> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('products').findOne({ id });
   },
   
   save: async (product: Product) => {
-    const db = await getDb();
-    const index = db.products.findIndex(p => p.id === product.id);
-    let newProducts;
-    if (index > -1) {
-      newProducts = [...db.products];
-      newProducts[index] = product;
-    } else {
-      newProducts = [...db.products, product];
-    }
-    await updateDb({ ...db, products: newProducts });
+    const db = await getDbInstance();
+    await db.collection('products').updateOne(
+      { id: product.id },
+      { $set: product },
+      { upsert: true }
+    );
     return product;
   },
   
   delete: async (id: string) => {
-    const db = await getDb();
-    const newProducts = db.products.filter(p => p.id !== id);
-    await updateDb({ ...db, products: newProducts });
+    const db = await getDbInstance();
+    await db.collection('products').deleteOne({ id });
   }
 };

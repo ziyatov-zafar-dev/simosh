@@ -1,30 +1,26 @@
 
 import { PromoCode } from '../types';
-import { getDb, updateDb } from './dbService';
+import { getDbInstance } from './dbService';
 
 export const promoService = {
-  getAll: async () => {
-    const db = await getDb();
-    return db.promoCodes;
+  getAll: async (): Promise<PromoCode[]> => {
+    const db = await getDbInstance();
+    // @ts-ignore
+    return db.collection('promoCodes').find({}).toArray();
   },
   
   save: async (promo: PromoCode) => {
-    const db = await getDb();
-    const index = db.promoCodes.findIndex(p => p.id === promo.id);
-    let newPromos;
-    if (index > -1) {
-      newPromos = [...db.promoCodes];
-      newPromos[index] = promo;
-    } else {
-      newPromos = [...db.promoCodes, promo];
-    }
-    await updateDb({ ...db, promoCodes: newPromos });
+    const db = await getDbInstance();
+    await db.collection('promoCodes').updateOne(
+      { id: promo.id },
+      { $set: promo },
+      { upsert: true }
+    );
     return promo;
   },
   
   delete: async (id: string) => {
-    const db = await getDb();
-    const newPromos = db.promoCodes.filter(p => p.id !== id);
-    await updateDb({ ...db, promoCodes: newPromos });
+    const db = await getDbInstance();
+    await db.collection('promoCodes').deleteOne({ id });
   }
 };

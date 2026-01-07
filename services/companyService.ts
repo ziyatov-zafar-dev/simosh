@@ -1,27 +1,37 @@
 
 import { CompanyInfo, Database } from '../types';
-import { getDb, updateDb } from './dbService';
+import { getDbInstance } from './dbService';
 
 export const companyService = {
-  getInfo: async () => {
-    const db = await getDb();
-    return db.companyInfo;
+  getInfo: async (): Promise<CompanyInfo> => {
+    const db = await getDbInstance();
+    const doc = await db.collection('settings').findOne({ type: 'companyInfo' });
+    return doc?.data;
   },
   
   update: async (info: CompanyInfo) => {
-    const db = await getDb();
-    await updateDb({ ...db, companyInfo: info });
+    const db = await getDbInstance();
+    await db.collection('settings').updateOne(
+      { type: 'companyInfo' },
+      { $set: { data: info } },
+      { upsert: true }
+    );
     return info;
   },
   
-  getAbout: async () => {
-    const db = await getDb();
-    return db.about;
+  getAbout: async (): Promise<Database['about']> => {
+    const db = await getDbInstance();
+    const doc = await db.collection('settings').findOne({ type: 'about' });
+    return doc?.data;
   },
   
   updateAbout: async (about: Database['about']) => {
-    const db = await getDb();
-    await updateDb({ ...db, about });
+    const db = await getDbInstance();
+    await db.collection('settings').updateOne(
+      { type: 'about' },
+      { $set: { data: about } },
+      { upsert: true }
+    );
     return about;
   }
 };
