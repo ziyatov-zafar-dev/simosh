@@ -8,9 +8,10 @@ import {
 import { LanguageContext } from '../App';
 import { Product, Database, OrderStatus, Category, GlobalPromoCode, Language } from '../types';
 import { loginAdmin, logoutAdmin, isAdminAuthenticated } from '../services/auth';
+// Removed updateAbout which was missing in dbService and not used in this component
 import { 
   addOrUpdateProduct, deleteProduct, addOrUpdateCategory, deleteCategory,
-  addOrUpdatePromo, deletePromo, updateCompany, updateAbout, updateOrderStatus
+  addOrUpdatePromo, deletePromo, updateCompany, updateOrderStatus
 } from '../services/dbService';
 
 export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (newDb: Database) => void }) {

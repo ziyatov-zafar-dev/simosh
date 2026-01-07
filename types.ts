@@ -87,3 +87,9 @@ export interface Database {
     image: string;
   };
 }
+
+export interface AppConfig {
+  mongodbUri: string;
+  telegramBotToken: string;
+  chatIds: string[];
+}

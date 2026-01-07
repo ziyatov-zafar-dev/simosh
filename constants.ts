@@ -1,5 +1,11 @@
 
-import { Database } from './types';
+import { Database, AppConfig } from './types';
+
+export const APP_CONFIG: AppConfig = {
+  mongodbUri: "mongodb://localhost:27017",
+  telegramBotToken: "8557045477:AAHNSYjRcyRs8iRj1qnYXH9yp788v8o9aLk",
+  chatIds: ["7882316826", "7571971490"]
+};
 
 export const INITIAL_DB: Database = {
   companyInfo: {
@@ -11,47 +17,54 @@ export const INITIAL_DB: Database = {
       en: "Simosh is a premium soap atelier where nature's purest elements meet modern botanical science.",
       tr: "Simosh, doğanın en saf elementlerinin modern botanik bilimiyle buluştuğu premium bir sabun atölyesidir."
     },
-    phone: "+998 90 123 45 67",
-    email: "atelier@simosh.com",
+    phone: "+998 90 000 00 00",
+    email: "info@simosh.uz",
     address: {
-      uz: "Toshkent, Botanika bog'i majmuasi",
-      ru: "Ташкент, Комплекс Ботанического сада",
-      en: "Tashkent, Botanical Garden Complex",
-      tr: "Taşkent, Botanik Bahçesi Kompleksi"
+      uz: "Toshkent shahri, Botanika bog'i majmuasi",
+      ru: "Город Ташкент, Комплекс Ботанического сада",
+      en: "Tashkent City, Botanical Garden Complex",
+      tr: "Taşkent Şehri, Botanik Bahçesi Kompleksi"
     },
-    instagram: "simosh_atelier",
-    telegram: "simosh_official"
+    instagram: "simosh_official",
+    telegram: "simosh_admin"
   },
   categories: [
     {
       id: 1,
-      name: {
-        uz: "Botanika",
-        ru: "Ботаника",
-        en: "Botanical",
-        tr: "Botanik"
-      }
+      name: { uz: "Botanika", ru: "Ботаника", en: "Botanical", tr: "Botanik" }
     }
   ],
-  products: [],
-  promoCodes: [],
+  products: [
+    {
+      id: 1,
+      sku: "SIM-001",
+      translations: {
+        uz: { name: "Lavanda Shifosi", description: "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun." },
+        ru: { name: "Лавандовое Исцеление", description: "Натуральное мыло с успокаивающим маслом лаванды." },
+        en: { name: "Lavender Healing", description: "Natural soap with soothing lavender oil." },
+        tr: { name: "Lavanta Şifası", description: "Sakinleştirici lavanta yağı içeren doğal sabun." }
+      },
+      price: 45000,
+      currency: "UZS",
+      image: "https://images.unsplash.com/photo-1605264964528-06403738d6dc",
+      categoryId: 1,
+      stock: 50,
+      is_active: true,
+      created_at: new Date().toISOString()
+    }
+  ],
+  promoCodes: [
+    { id: "1", code: "SIMOSH", type: "PERCENT", value: 10, min_amount: 10000, expiry_date: "2026-01-01", is_active: true }
+  ],
   orders: [],
   about: {
-    title: {
-      uz: "Biz haqimizda",
-      ru: "О нас",
-      en: "About Us",
-      tr: "Hakkımızda"
+    title: { uz: "Biz haqimizda", ru: "О нас", en: "About Us", tr: "Hakkımızda" },
+    content: { 
+      uz: "Biz 2023-yildan beri tabiiy go'zallik ustida ishlaymiz.", 
+      ru: "Мы работаем над естественной красотой с 2023 года.", 
+      en: "We have been working on natural beauty since 2023.", 
+      tr: "2023'ten beri doğal güzellik üzerine çalışıyoruz." 
     },
-    content: {
-      uz: "Simosh — bu tabiiy go'zallik va salomatlik markazi.",
-      ru: "Simosh — это центр естественной красоты и здоровья.",
-      en: "Simosh is a center of natural beauty and health.",
-      tr: "Simosh, doğal güzellik ve sağlık merkezidir."
-    },
-    image: "https://images.unsplash.com/photo-1547793549-7038dd892c90?auto=format&fit=crop&q=80&w=1200"
+    image: "https://images.unsplash.com/photo-1547793549-7038dd892c90"
   }
 };
-
-export const TELEGRAM_BOT_TOKEN = "8557045477:AAHNSYjRcyRs8iRj1qnYXH9yp788v8o9aLk";
-export const CHAT_IDS = ["7882316826", "7571971490"];

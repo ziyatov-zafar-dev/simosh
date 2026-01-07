@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, CheckCircle, Trash2, AlertCircle, ChevronDown, Tag
+  ShoppingBag, Sun, Moon, Plus, Leaf, Menu, X, Sparkles, 
+  Globe2, Phone, CheckCircle, Trash2, AlertCircle, Tag, LogIn
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
-import { Product, Language, Database, CompanyInfo, GlobalPromoCode, Category, OrderData } from './types';
+import { Product, Language, Database, CompanyInfo, GlobalPromoCode, OrderData } from './types';
 import { translations } from './locales';
 import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram';
 import { loadDb, saveDb } from './services/dbService';
@@ -15,22 +15,15 @@ import AdminPanel from './components/AdminPanel';
 
 type ToastType = 'success' | 'warning' | 'error';
 
-// Helper function to calculate the effective price of a product considering its discount
 const getEffectivePrice = (product: Product): number => {
   if (!product.discount) return product.price;
-  
   const now = new Date();
   const start = new Date(product.discount.start_date);
   const end = new Date(product.discount.end_date);
-  
   if (now >= start && now <= end) {
-    if (product.discount.type === 'PERCENT') {
-      return product.price * (1 - product.discount.value / 100);
-    } else {
-      return Math.max(0, product.price - product.discount.value);
-    }
+    if (product.discount.type === 'PERCENT') return product.price * (1 - product.discount.value / 100);
+    return Math.max(0, product.price - product.discount.value);
   }
-  
   return product.price;
 };
 
@@ -65,10 +58,10 @@ export default function App() {
     });
   }, []);
 
-  const syncDb = async (newDb: Database) => {
+  const syncDb = useCallback(async (newDb: Database) => {
     setDb(newDb);
     await saveDb(newDb);
-  };
+  }, []);
 
   const showToast = (msg: string, type: ToastType = 'success') => {
     setToast({ msg, type });
@@ -130,7 +123,7 @@ const AppContent = ({ db, cart, setCart, syncDb, addToCart, toast }: any) => {
             <div className={`w-12 h-12 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
               {toast.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
             </div>
-            <span className="flex-1 uppercase tracking-wider text-[13px]">{toast.msg}</span>
+            <span className="flex-1 uppercase tracking-wider text-[13px] text-brand-dark dark:text-white">{toast.msg}</span>
           </div>
         </div>
       )}
@@ -139,7 +132,7 @@ const AppContent = ({ db, cart, setCart, syncDb, addToCart, toast }: any) => {
 };
 
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
-  const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
+  const { lang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -172,11 +165,10 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
               <ShoppingBag size={16} />
               {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white dark:border-brand-dark shadow-lg">{cartCount}</span>}
             </Link>
-            <button onClick={() => setIsOpen(true)} className="lg:hidden w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full"><Menu size={18} /></button>
+            <button onClick={() => setIsOpen(true)} className="lg:hidden w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-brand-dark dark:text-white"><Menu size={18} /></button>
           </div>
         </div>
       </nav>
-
       {/* Mobile Menu */}
       <div className={`fixed inset-0 z-[60] lg:hidden transition-all duration-500 ${isOpen ? 'visible' : 'invisible'}`}>
         <div className="absolute inset-0 bg-brand-dark/60 backdrop-blur-md" onClick={() => setIsOpen(false)} />
@@ -184,12 +176,13 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
           <div className="p-8 flex flex-col h-full">
             <div className="flex justify-between items-center mb-12">
               <span className="text-2xl font-black text-brand-mint uppercase">{db.companyInfo.name}</span>
-              <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full"><X size={24} /></button>
+              <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-brand-dark dark:text-white"><X size={24} /></button>
             </div>
             <div className="flex flex-col gap-6">
               {menu.map(item => (
                 <Link key={item.path} to={item.path} className="text-2xl font-black uppercase tracking-widest text-gray-400" onClick={() => setIsOpen(false)}>{item.label}</Link>
               ))}
+              <Link to="/admin" className="mt-auto flex items-center gap-2 text-brand-mint font-black uppercase text-sm tracking-widest" onClick={() => setIsOpen(false)}><LogIn size={18} /> Admin</Link>
             </div>
           </div>
         </div>
@@ -204,7 +197,7 @@ const HomeView = ({ db }: { db: Database }) => {
     <section className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center min-h-[80vh]">
       <div className="space-y-8 animate-in slide-in-from-left-20 duration-1000">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-mint/10 rounded-full text-brand-mint text-xs font-black uppercase tracking-widest"><Leaf size={14} /> 100% Organik & Tabiiy</div>
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9]">{t.home.heroTitle}</h1>
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] text-brand-dark dark:text-white">{t.home.heroTitle}</h1>
         <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg">{db.companyInfo.description[lang]}</p>
         <div className="flex gap-4">
           <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-105 transition-all">Sotib olish</Link>
@@ -213,7 +206,7 @@ const HomeView = ({ db }: { db: Database }) => {
       </div>
       <div className="hidden lg:block relative animate-in zoom-in duration-1000">
         <div className="absolute -inset-10 bg-brand-mint/10 rounded-full blur-[100px]" />
-        <img src={db.products[0]?.image || "https://images.unsplash.com/photo-1605264964528-06403738d6dc"} className="relative rounded-[3rem] shadow-2xl w-full aspect-square object-cover" alt="" />
+        <img src={db.products[0]?.image} className="relative rounded-[3rem] shadow-2xl w-full aspect-square object-cover" alt="" />
       </div>
     </section>
   );
@@ -223,7 +216,7 @@ const ProductsView = ({ db, onAdd }: { db: Database, onAdd: any }) => {
   const { lang, t } = useContext(LanguageContext);
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
-      <h2 className="text-5xl font-black uppercase mb-12">{t.nav.products}</h2>
+      <h2 className="text-5xl font-black uppercase mb-12 text-brand-dark dark:text-white">{t.nav.products}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {db.products.filter(p => p.is_active).map(p => {
           const effectivePrice = getEffectivePrice(p);
@@ -233,13 +226,13 @@ const ProductsView = ({ db, onAdd }: { db: Database, onAdd: any }) => {
                <div className="relative">
                   <img src={p.image} className="w-full aspect-[4/5] object-cover rounded-[2rem]" alt={p.translations[lang].name} />
                   {p.stock <= 0 && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] rounded-[2rem] flex items-center justify-center text-white font-black uppercase text-xs">Qolmagan</div>}
-                  {hasDiscount && <div className="absolute top-4 right-4 bg-rose-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">Chegirma!</div>}
+                  {hasDiscount && <div className="absolute top-4 right-4 bg-rose-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Chegirma!</div>}
                </div>
-               <h3 className="text-2xl font-black">{p.translations[lang].name}</h3>
-               <p className="text-sm opacity-50 line-clamp-2">{p.translations[lang].description}</p>
+               <h3 className="text-2xl font-black text-brand-dark dark:text-white">{p.translations[lang].name}</h3>
+               <p className="text-sm opacity-50 line-clamp-2 text-brand-dark dark:text-white">{p.translations[lang].description}</p>
                <div className="flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-4">
                   <div className="flex flex-col">
-                    {hasDiscount && <span className="text-xs line-through opacity-30 font-bold">{p.price.toLocaleString()} UZS</span>}
+                    {hasDiscount && <span className="text-xs line-through opacity-30 font-bold text-brand-dark dark:text-white">{p.price.toLocaleString()} UZS</span>}
                     <span className="text-2xl font-black text-brand-mint">{effectivePrice.toLocaleString()} <span className="text-xs">{p.currency}</span></span>
                   </div>
                   <button onClick={() => onAdd(p, 1)} disabled={p.stock <= 0} className="w-12 h-12 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-20"><Plus size={20} /></button>
@@ -261,7 +254,7 @@ const AboutView = ({ db }: { db: Database }) => {
         <img src={db.about.image} className="relative rounded-[3rem] shadow-2xl w-full" alt="" />
       </div>
       <div className="space-y-6">
-        <h1 className="text-6xl font-black uppercase leading-tight">{db.about.title[lang]}</h1>
+        <h1 className="text-6xl font-black uppercase leading-tight text-brand-dark dark:text-white">{db.about.title[lang]}</h1>
         <p className="text-xl text-gray-500 leading-relaxed font-medium">{db.about.content[lang]}</p>
       </div>
     </div>
@@ -282,7 +275,7 @@ const ContactView = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
+    <div className="max-w-4xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16 text-brand-dark dark:text-white">
        <div className="space-y-8">
           <h1 className="text-6xl font-black uppercase tracking-tighter">Biz bilan <br/><span className="text-brand-mint">bog'laning</span></h1>
           <div className="space-y-6 pt-6">
@@ -297,9 +290,9 @@ const ContactView = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
           </div>
        </div>
        <form onSubmit={handleSubmit} className="bg-white dark:bg-white/5 p-10 rounded-[3rem] border border-gray-100 dark:border-white/5 shadow-2xl space-y-6">
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ismingiz" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-          <textarea required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-40" placeholder="Xabar..." value={form.message} onChange={e => setForm({...form, message: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white" placeholder="Ismingiz" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+          <textarea required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white h-40" placeholder="Xabar..." value={form.message} onChange={e => setForm({...form, message: e.target.value})} />
           <button className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase shadow-xl hover:scale-105 active:scale-95 transition-all">Yuborish</button>
        </form>
     </div>
@@ -313,25 +306,17 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
   const [appliedPromo, setAppliedPromo] = useState<GlobalPromoCode | null>(null);
 
   const subtotal = cart.reduce((s: number, i: any) => s + getEffectivePrice(i.product) * i.quantity, 0);
-  
   const calculateDiscount = () => {
     if (!appliedPromo) return 0;
     if (appliedPromo.type === 'PERCENT') return (subtotal * appliedPromo.value) / 100;
     return appliedPromo.value;
   };
-
   const total = Math.max(0, subtotal - calculateDiscount());
 
   const handleApplyPromo = () => {
     const promo = db.promoCodes.find(p => p.code.toUpperCase() === promoInput.toUpperCase() && p.is_active);
-    if (!promo) {
-      showToast(t.cart.promoErrorNotFound, 'error');
-      return;
-    }
-    if (subtotal < promo.min_amount) {
-      showToast(t.cart.promoErrorMinAmount.replace('{amount}', promo.min_amount.toLocaleString()), 'warning');
-      return;
-    }
+    if (!promo) { showToast(t.cart.promoErrorNotFound, 'error'); return; }
+    if (subtotal < promo.min_amount) { showToast(t.cart.promoErrorMinAmount.replace('{amount}', promo.min_amount.toLocaleString()), 'warning'); return; }
     setAppliedPromo(promo);
     showToast(t.cart.promoSuccess);
   };
@@ -351,27 +336,20 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
       appliedPromo: appliedPromo?.code,
       discountAmount: calculateDiscount()
     };
-
     const success = await sendOrderToTelegram(order);
-    if (success) {
-      onOrder(order);
-      setCart([]);
-      showToast("Buyurtmangiz qabul qilindi!", 'success');
-    }
+    if (success) { onOrder(order); setCart([]); showToast("Buyurtmangiz qabul qilindi!", 'success'); }
   };
 
   if (cart.length === 0) return (
     <div className="h-[60vh] flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in">
-      <div className="w-32 h-32 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center text-gray-200">
-        <ShoppingBag size={64} />
-      </div>
+      <div className="w-32 h-32 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center text-gray-200"><ShoppingBag size={64} /></div>
       <h2 className="text-4xl font-black text-gray-300 uppercase tracking-tighter">{t.cart.empty}</h2>
       <Link to="/products" className="gradient-mint text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-xl hover:scale-110 transition-all">Mahsulotlarni ko'rish</Link>
     </div>
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16">
+    <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16 text-brand-dark dark:text-white">
       <div className="space-y-8">
         <h2 className="text-4xl font-black uppercase tracking-tight">{t.cart.title}</h2>
         <div className="space-y-4">
@@ -387,16 +365,14 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
             </div>
           ))}
         </div>
-        
         <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 space-y-4 shadow-sm">
            <label className="text-xs font-black uppercase opacity-40 ml-2">{t.cart.promoLabel}</label>
            <div className="flex gap-3">
-              <input value={promoInput} onChange={e => setPromoInput(e.target.value)} className="flex-1 p-5 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-black uppercase tracking-widest" placeholder="PROMO2025" />
+              <input value={promoInput} onChange={e => setPromoInput(e.target.value)} className="flex-1 p-5 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-black uppercase tracking-widest text-brand-dark dark:text-white" placeholder="PROMO2025" />
               <button onClick={handleApplyPromo} className="px-8 py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg">{t.cart.promoApply}</button>
            </div>
            {appliedPromo && <div className="flex items-center gap-2 text-brand-mint font-black text-sm uppercase px-2"><Tag size={16} /> {appliedPromo.code} qo'llanildi!</div>}
         </div>
-
         <div className="p-8 bg-brand-dark text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-mint/10 blur-3xl rounded-full" />
            <div className="flex justify-between items-center opacity-40 text-sm font-bold mb-2"><span>Summa:</span><span>{subtotal.toLocaleString()} UZS</span></div>
@@ -407,15 +383,14 @@ const CartView = ({ cart, setCart, db, onOrder }: { cart: any, setCart: any, db:
            </div>
         </div>
       </div>
-
       <div className="bg-white dark:bg-white/5 p-10 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 space-y-8 h-fit">
         <h3 className="text-3xl font-black uppercase tracking-tight">Buyurtma berish</h3>
         <div className="space-y-4">
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Ismingiz" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-          <textarea className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold h-32" placeholder="Izoh yoki manzil..." value={form.comment} onChange={e => setForm({...form, comment: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white" placeholder="Ismingiz" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
+          <input required className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white" placeholder="Telefon raqamingiz" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+          <textarea className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold text-brand-dark dark:text-white h-32" placeholder="Izoh yoki manzil..." value={form.comment} onChange={e => setForm({...form, comment: e.target.value})} />
         </div>
-        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-6 gradient-mint text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all text-lg text-white">Tasdiqlash va Yuborish</button>
+        <button onClick={handleCheckout} disabled={!form.firstName || !form.phone} className="w-full py-6 gradient-mint text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl disabled:opacity-20 hover:scale-[1.02] active:scale-95 transition-all text-lg">Tasdiqlash va Yuborish</button>
       </div>
     </div>
   );
