@@ -15,35 +15,28 @@
         theme: {
           extend: {
             colors: {
-              // Non-white Light Mode (Warm Linen/Sand)
-              // Non-black Dark Mode (Deep Midnight/Charcoal)
+              // Custom Luxury Palette: 
+              // Light: A warm, bright "Linen Pearl" (not pure white)
+              // Dark: A deep "Mineral Charcoal" (not pure black)
               atelier: {
-                50: '#FDFBF7', // Linen Light
-                100: '#F7F3EB', 
-                200: '#EDE4D5', 
-                300: '#DCC8AD', 
-                400: '#C5A987', 
-                500: '#B18E66', 
-                600: '#9E7754', 
-                700: '#846247', 
-                800: '#6C513E', 
-                900: '#1D1E20', // Deep Charcoal
-                950: '#121315', // Midnight Slate
+                50: '#FDF9F3', // Lightest - Linen
+                100: '#F7F1E6',
+                200: '#E9DEC9',
+                300: '#D5C1A2',
+                400: '#B89D7A',
+                500: '#9B7C57',
+                900: '#1E2022', // Deep Slate
+                950: '#141618', // Mineral Base
               },
               accent: {
-                // A vibrant, modern botanical green
-                400: '#64D28D',
-                500: '#34D399',
-                600: '#059669',
+                400: '#5EEAD4',
+                500: '#14B8A6',
+                600: '#0D9488',
               }
             },
             fontFamily: {
               sans: ['"Outfit"', 'sans-serif'],
               serif: ['"Cormorant Garamond"', 'serif'],
-            },
-            boxShadow: {
-              'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.04)',
-              'luxury': '0 30px 60px -12px rgba(0, 0, 0, 0.12)',
             }
           }
         }
@@ -51,63 +44,61 @@
     </script>
     <style>
         * {
-          transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.3s ease, color 0.3s ease;
+          transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease;
         }
         body {
             font-family: 'Outfit', sans-serif;
             scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
         }
         .glass-nav {
-          background: rgba(253, 251, 247, 0.7);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          background: rgba(253, 249, 243, 0.75);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
         }
         .dark .glass-nav {
-          background: rgba(29, 30, 32, 0.7);
+          background: rgba(20, 22, 24, 0.75);
         }
-        .modern-gradient {
-          background: linear-gradient(135deg, #1D1E20 0%, #B18E66 100%);
+        .luxury-card {
+          background: #ffffff;
+          border: 1px solid rgba(0,0,0,0.03);
         }
-        .dark .modern-gradient {
-          background: linear-gradient(135deg, #FDFBF7 0%, #34D399 100%);
+        .dark .luxury-card {
+          background: #1E2022;
+          border: 1px solid rgba(255,255,255,0.05);
         }
         ::selection {
-          background: #B18E66;
+          background: #14B8A6;
           color: white;
         }
-        .dark ::selection {
-          background: #34D399;
-          color: #121315;
-        }
-        /* Custom scrollbar for premium feel */
         ::-webkit-scrollbar {
-          width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-          background: transparent;
+          width: 5px;
         }
         ::-webkit-scrollbar-thumb {
-          background: #B18E66;
+          background: #9B7C57;
           border-radius: 10px;
         }
         .dark ::-webkit-scrollbar-thumb {
-          background: #34D399;
+          background: #14B8A6;
         }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@7.1.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.468.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
-<body class="bg-atelier-50 dark:bg-atelier-950 text-atelier-900 dark:text-atelier-50 selection:bg-accent-500/30 overflow-x-hidden">
+<body class="bg-atelier-50 dark:bg-atelier-950 text-atelier-900 dark:text-atelier-50 selection:bg-accent-500/20">
     <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

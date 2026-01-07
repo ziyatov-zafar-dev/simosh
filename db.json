@@ -1,36 +1,86 @@
 
 {
   "companyInfo": {
-    "name": "Simosh",
-    "description": "Tabiiy va sifatli sovunlar ishlab chiqaruvchi yetakchi brend. Bizning mahsulotlarimiz teringiz uchun eng yaxshi g'amxo'rlikni ta'minlaydi.",
+    "name": "Simosh Atelier",
+    "description": {
+      "uz": "Tabiiy va sifatli sovunlar ishlab chiqaruvchi yetakchi brend. Bizning mahsulotlarimiz teringiz uchun eng yaxshi g'amxo'rlikni ta'minlaydi.",
+      "ru": "Ведущий бреnd натурального и качественного мыла. Наша продукция обеспечивает лучший уход за вашей кожей.",
+      "en": "A leading brand of natural and high-quality soaps. Our products provide the best care for your skin.",
+      "tr": "Doğal ve kaliteli sabunların lider markası. Ürünlerimiz cildiniz için en iyi bakımı sağlar."
+    },
     "phone": "+998 90 123 45 67",
     "email": "info@simosh.uz",
-    "address": "Toshkent shahri, Chilonzor tumani",
+    "address": {
+      "uz": "Toshkent shahri, Chilonzor tumani",
+      "ru": "Город Ташкент, Чиланзарский район",
+      "en": "Tashkent City, Chilanzar district",
+      "tr": "Taşkent Şehri, Chilanzar bölgesi"
+    },
     "instagram": "simosh_official",
     "telegram": "simosh_admin"
   },
   "products": [
     {
       "id": "1",
-      "name": "Lavanda Shifosi",
-      "description": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun.",
+      "name": {
+        "uz": "Lavanda Shifosi",
+        "ru": "Лавандовое Исцеление",
+        "en": "Lavender Healing",
+        "tr": "Lavanta Şifası"
+      },
+      "description": {
+        "uz": "Tinchlantiruvchi lavanda moyi bilan boyitilgan tabiiy sovun.",
+        "ru": "Натуральное мыло, обогащенное успокаивающим маслом лаванды.",
+        "en": "Natural soap enriched with soothing lavender oil.",
+        "tr": "Sakinleştirici lavanta yağı ile zenginleştirilmiş doğal sabun."
+      },
       "price": 25000,
-      "image": "https://picsum.photos/seed/soap1/400/400",
-      "category": "Sovunlar"
+      "image": "https://images.unsplash.com/photo-1605264964528-06403738d6dc?auto=format&fit=crop&q=80&w=800",
+      "category": {
+        "uz": "Botanika",
+        "ru": "Ботаника",
+        "en": "Botanical",
+        "tr": "Botanik"
+      }
     },
     {
       "id": "2",
-      "name": "Asal va Sut",
-      "description": "Teringizni yumshoq va namlangan holda saqlovchi klassik kombinatsiya.",
+      "name": {
+        "uz": "Asal va Sut",
+        "ru": "Мед и Молоко",
+        "en": "Honey & Milk",
+        "tr": "Bal ve Süt"
+      },
+      "description": {
+        "uz": "Teringizni yumshoq va namlangan holda saqlovchi klassik kombinatsiya.",
+        "ru": "Классическое сочетание, сохраняющее вашу кожу мягкой и увлажненной.",
+        "en": "A classic combination that keeps your skin soft and hydrated.",
+        "tr": "Cildinizi yumuşak ve nemli tutan klasik bir kombinasyon."
+      },
       "price": 22000,
-      "image": "https://picsum.photos/seed/soap2/400/400",
-      "category": "Sovunlar"
+      "image": "https://images.unsplash.com/photo-1546931457-3f895c12792e?auto=format&fit=crop&q=80&w=800",
+      "category": {
+        "uz": "Oziqlantiruvchi",
+        "ru": "Питательное",
+        "en": "Nourishing",
+        "tr": "Besleyici"
+      }
     }
   ],
   "about": {
-    "title": "Biz haqimizda",
-    "content": "Simosh kompaniyasi 2023-yilda tashkil etilgan bo'lib, asosiy maqsadimiz aholiga butunlay tabiiy va kimyoviy qo'shimchalarsiz sovunlarni taqdim etishdir.",
-    "image": "https://picsum.photos/seed/factory/800/600"
+    "title": {
+      "uz": "Biz haqimizda",
+      "ru": "О нас",
+      "en": "About Us",
+      "tr": "Hakkımızda"
+    },
+    "content": {
+      "uz": "Simosh kompaniyasi 2023-yilda tashkil etilgan bo'lib, asosiy maqsadimiz aholiga butunlay tabiiy va kimyoviy qo'shimchalarsiz sovunlarni taqdim etishdir.",
+      "ru": "Компания Simosh была основана в 2023 году. Наша главная цель — предоставить людям полностью натуральное мыло без химических добавок.",
+      "en": "Simosh was founded in 2023. Our main goal is to provide people with completely natural soaps free from chemical additives.",
+      "tr": "Simosh 2023 yılında kuruldu. Temel amacımız, insanlara kimyasal katkı maddesi içermeyen tamamen doğal sabunlar sunmaktır."
+    },
+    "image": "https://images.unsplash.com/photo-1547793549-7038dd892c90?auto=format&fit=crop&q=80&w=1200"
   },
   "admin": {
     "email": "akbarovamohinur23@gmail.com",

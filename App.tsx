@@ -54,7 +54,7 @@ const Toast = ({ message, onClose }: { message: string, onClose: () => void }) =
 
   return (
     <div className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-8 fade-in duration-500">
-      <div className="bg-atelier-900 dark:bg-accent-500 text-atelier-50 dark:text-atelier-950 px-10 py-4 rounded-[32px] shadow-luxury flex items-center gap-4 border border-white/10 font-bold backdrop-blur-xl">
+      <div className="bg-atelier-900 dark:bg-accent-500 text-atelier-50 dark:text-atelier-950 px-10 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10 font-bold backdrop-blur-xl">
         <CheckCircle2 size={20} className="text-accent-400 dark:text-atelier-950" />
         {message}
       </div>
@@ -84,16 +84,16 @@ const Navbar = ({ cartCount }: { cartCount: number }) => {
   ];
 
   return (
-    <nav className="glass-nav fixed top-0 w-full z-50 border-b border-atelier-200 dark:border-atelier-800/50 h-24 flex items-center">
+    <nav className="glass-nav fixed top-0 w-full z-50 border-b border-atelier-200 dark:border-atelier-800/50 h-24 flex items-center transition-all duration-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-4 group">
-            <div className="w-14 h-14 bg-atelier-900 dark:bg-accent-500 rounded-3xl flex items-center justify-center shadow-luxury group-hover:rotate-[10deg] transition-all duration-500">
+            <div className="w-14 h-14 bg-atelier-900 dark:bg-accent-500 rounded-[24px] flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
               <Leaf className="text-accent-400 dark:text-atelier-900" size={28} />
             </div>
             <div className="hidden sm:block">
-              <span className="text-3xl font-black text-atelier-900 dark:text-atelier-50 tracking-tighter leading-none block font-serif uppercase">SIMOSH</span>
-              <span className="text-[10px] font-bold tracking-[0.4em] uppercase opacity-30 dark:text-atelier-400 mt-1 block">Botanical Craft</span>
+              <span className="text-3xl font-black text-atelier-900 dark:text-atelier-50 tracking-tighter leading-none block font-serif uppercase italic">SIMOSH</span>
+              <span className="text-[10px] font-bold tracking-[0.4em] uppercase opacity-30 dark:text-atelier-400 mt-1 block">Botanical Atelier</span>
             </div>
           </Link>
 
@@ -104,7 +104,7 @@ const Navbar = ({ cartCount }: { cartCount: number }) => {
                 to={item.path}
                 className={`px-6 py-2.5 text-[11px] font-black tracking-[0.2em] uppercase rounded-full transition-all ${
                   location.pathname === item.path 
-                    ? 'bg-atelier-900 text-white dark:bg-accent-500 dark:text-atelier-900 shadow-luxury' 
+                    ? 'bg-atelier-900 text-white dark:bg-accent-500 dark:text-atelier-900' 
                     : 'text-atelier-900/40 dark:text-atelier-500 hover:text-atelier-900 dark:hover:text-atelier-50 hover:bg-atelier-100 dark:hover:bg-atelier-800'
                 }`}
               >
@@ -113,7 +113,7 @@ const Navbar = ({ cartCount }: { cartCount: number }) => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button 
               onClick={toggleTheme}
               className="p-3.5 text-atelier-900/30 dark:text-atelier-500 hover:bg-atelier-100 dark:hover:bg-atelier-800 rounded-full transition-all"
@@ -130,7 +130,7 @@ const Navbar = ({ cartCount }: { cartCount: number }) => {
                 {lang.toUpperCase()}
               </button>
               {showLangs && (
-                <div className="absolute right-0 mt-4 w-40 bg-white dark:bg-atelier-900 rounded-[32px] shadow-luxury border border-atelier-100 dark:border-atelier-800 overflow-hidden py-3 animate-in fade-in slide-in-from-top-4">
+                <div className="absolute right-0 mt-4 w-40 bg-white dark:bg-atelier-900 rounded-[32px] shadow-2xl border border-atelier-100 dark:border-atelier-800 overflow-hidden py-3 animate-in fade-in slide-in-from-top-4">
                   {langs.map(l => (
                     <button
                       key={l.id}
@@ -146,7 +146,7 @@ const Navbar = ({ cartCount }: { cartCount: number }) => {
 
             <Link 
               to="/cart"
-              className="relative p-4 bg-atelier-900 dark:bg-accent-500 text-white dark:text-atelier-900 rounded-full hover:scale-110 transition-transform shadow-luxury"
+              className="relative p-4 bg-atelier-900 dark:bg-accent-500 text-white dark:text-atelier-900 rounded-full hover:scale-110 transition-transform shadow-xl"
             >
               <ShoppingBag size={22} />
               {cartCount > 0 && (
@@ -178,11 +178,11 @@ const ProductCard: React.FC<{ product: Product, addToCart: (p: Product, q: numbe
   };
 
   return (
-    <div className="group bg-white dark:bg-atelier-900/50 rounded-[64px] overflow-hidden shadow-glass border border-atelier-100 dark:border-atelier-800/50 hover:shadow-luxury transition-all duration-700 hover:-translate-y-5 flex flex-col h-full">
+    <div className="group bg-white dark:bg-atelier-900/50 rounded-[64px] overflow-hidden shadow-xl border border-atelier-100 dark:border-atelier-800/50 hover:shadow-2xl transition-all duration-700 hover:-translate-y-5 flex flex-col h-full">
       <div className="relative h-[480px] overflow-hidden bg-atelier-100 dark:bg-atelier-950">
         <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] ease-out" alt={product.name[lang]} />
         <div className="absolute top-10 right-10 bg-atelier-900/90 dark:bg-accent-500/90 backdrop-blur-3xl px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.4em] text-white dark:text-atelier-900">
-          Limited
+          Essential
         </div>
       </div>
       <div className="p-14 flex-1 flex flex-col justify-between">
@@ -197,9 +197,9 @@ const ProductCard: React.FC<{ product: Product, addToCart: (p: Product, q: numbe
         <div className="mt-12 space-y-10">
           <div className="flex items-center justify-between bg-atelier-50 dark:bg-atelier-950 p-4 rounded-[40px] border border-atelier-100 dark:border-atelier-800">
              <div className="flex items-center gap-5">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 bg-white dark:bg-atelier-800 text-atelier-900 dark:text-atelier-50 rounded-2xl shadow-premium hover:scale-110"><Minus size={18} /></button>
+                <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 bg-white dark:bg-atelier-800 text-atelier-900 dark:text-atelier-50 rounded-2xl shadow-sm hover:scale-110"><Minus size={18} /></button>
                 <span className="w-10 text-center font-black text-2xl dark:text-atelier-50">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="p-3 bg-white dark:bg-atelier-800 text-atelier-900 dark:text-atelier-50 rounded-2xl shadow-premium hover:scale-110"><Plus size={18} /></button>
+                <button onClick={() => setQty(qty + 1)} className="p-3 bg-white dark:bg-atelier-800 text-atelier-900 dark:text-atelier-50 rounded-2xl shadow-sm hover:scale-110"><Plus size={18} /></button>
              </div>
              <div className="text-right pr-4">
                 <p className="text-[10px] font-black text-atelier-900/20 dark:text-atelier-500 uppercase tracking-widest mb-1">Ritual Price</p>
@@ -210,14 +210,14 @@ const ProductCard: React.FC<{ product: Product, addToCart: (p: Product, q: numbe
           <button 
             onClick={handleAdd}
             disabled={isAdding}
-            className={`w-full py-7 rounded-full transition-all flex items-center justify-center gap-5 font-black text-xl tracking-widest uppercase shadow-luxury ${
+            className={`w-full py-7 rounded-full transition-all flex items-center justify-center gap-5 font-black text-xl tracking-widest uppercase shadow-xl ${
               isAdding 
                 ? 'bg-accent-500 text-atelier-900 scale-95' 
                 : 'bg-atelier-900 dark:bg-accent-500 text-white dark:text-atelier-900 hover:scale-[1.03]'
             }`}
           >
             {isAdding ? <CheckCircle2 size={28} /> : <ShoppingBag size={28} />}
-            {isAdding ? 'Secured' : t.cart.add}
+            {isAdding ? 'Added' : t.cart.add}
           </button>
         </div>
       </div>
@@ -236,10 +236,10 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, onCheckout }: any) => 
         onClick={() => navigate(-1)}
         className="flex items-center gap-4 text-atelier-900/30 dark:text-atelier-500 font-black mb-20 hover:text-atelier-900 dark:hover:text-atelier-50 transition-all group"
       >
-        <div className="p-4 rounded-full bg-atelier-100 dark:bg-atelier-800 group-hover:-translate-x-3 transition-transform shadow-glass">
+        <div className="p-4 rounded-full bg-atelier-100 dark:bg-atelier-800 group-hover:-translate-x-3 transition-transform shadow-xl">
           <ArrowLeft size={22} />
         </div>
-        <span className="uppercase tracking-[0.4em] text-sm">Return to Gallery</span>
+        <span className="uppercase tracking-[0.4em] text-sm font-black">Return to Gallery</span>
       </button>
 
       <div className="flex flex-col lg:flex-row gap-28">
@@ -247,12 +247,12 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, onCheckout }: any) => 
           <h1 className="text-8xl font-black text-atelier-900 dark:text-atelier-50 tracking-tighter font-serif italic">
             {t.cart.title}
             <span className="ml-10 text-3xl font-light text-atelier-900/20 dark:text-atelier-700">
-              — {cart.length} creations
+              — {cart.length} items
             </span>
           </h1>
 
           {cart.length === 0 ? (
-            <div className="py-40 text-center space-y-14 bg-white dark:bg-atelier-900/20 rounded-[80px] shadow-glass border border-atelier-100 dark:border-atelier-800">
+            <div className="py-40 text-center space-y-14 bg-white dark:bg-atelier-900/20 rounded-[80px] shadow-2xl border border-atelier-100 dark:border-atelier-800">
               <div className="w-48 h-48 bg-atelier-50 dark:bg-atelier-950 rounded-full flex items-center justify-center mx-auto">
                 <Wind size={80} className="text-atelier-900/10 dark:text-atelier-700" />
               </div>
@@ -264,8 +264,8 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, onCheckout }: any) => 
           ) : (
             <div className="space-y-8">
               {cart.map((item: any) => (
-                <div key={item.product.id} className="bg-white dark:bg-atelier-900/30 p-12 rounded-[72px] border border-atelier-100 dark:border-atelier-800 flex flex-col md:flex-row items-center gap-12 group hover:shadow-luxury transition-all duration-700">
-                  <div className="w-52 h-52 rounded-[56px] overflow-hidden shrink-0 shadow-glass">
+                <div key={item.product.id} className="bg-white dark:bg-atelier-900/30 p-12 rounded-[72px] border border-atelier-100 dark:border-atelier-800 flex flex-col md:flex-row items-center gap-12 group hover:shadow-2xl transition-all duration-700">
+                  <div className="w-52 h-52 rounded-[56px] overflow-hidden shrink-0 shadow-lg">
                     <img src={item.product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.product.name[lang]} />
                   </div>
                   <div className="flex-1 text-center md:text-left space-y-8">
@@ -300,7 +300,7 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, onCheckout }: any) => 
 
         {cart.length > 0 && (
           <div className="lg:w-[500px]">
-            <div className="sticky top-40 bg-atelier-900 dark:bg-atelier-900 rounded-[80px] p-20 text-white shadow-luxury space-y-16 border border-white/5">
+            <div className="sticky top-40 bg-atelier-900 dark:bg-atelier-900 rounded-[80px] p-20 text-white shadow-2xl space-y-16 border border-white/5">
               <h3 className="text-5xl font-black tracking-tighter font-serif italic">Purification Order</h3>
               
               <div className="space-y-10 pb-16 border-b border-white/10">
@@ -309,19 +309,19 @@ const CartPage = ({ cart, updateQuantity, removeFromCart, onCheckout }: any) => 
                   <span>{total.toLocaleString()} UZS</span>
                 </div>
                 <div className="flex justify-between font-serif italic text-2xl opacity-40">
-                  <span>White Glove Delivery</span>
+                  <span>Concierge Delivery</span>
                   <span className="text-accent-500">Included</span>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <p className="text-[12px] font-black uppercase tracking-[0.6em] text-atelier-400">Sacred Investment</p>
+                <p className="text-[12px] font-black uppercase tracking-[0.6em] text-atelier-400">Total Investment</p>
                 <p className="text-7xl font-black tracking-tighter leading-none">{total.toLocaleString()}<span className="text-xl font-bold ml-6 opacity-20">UZS</span></p>
               </div>
 
               <button 
                 onClick={onCheckout}
-                className="w-full bg-atelier-50 text-atelier-900 py-9 rounded-full font-black text-2xl hover:scale-105 transition-all flex items-center justify-center gap-6 shadow-luxury uppercase tracking-[0.2em]"
+                className="w-full bg-atelier-50 text-atelier-900 py-9 rounded-full font-black text-2xl hover:scale-105 transition-all flex items-center justify-center gap-6 shadow-xl uppercase tracking-[0.2em]"
               >
                 {t.cart.checkout} <ArrowRight size={32} />
               </button>
@@ -351,10 +351,10 @@ const CheckoutModal = ({ isOpen, onClose, onSubmit }: { isOpen: boolean, onClose
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-atelier-950/95 backdrop-blur-3xl" onClick={onClose} />
-      <div className="relative bg-atelier-100 dark:bg-atelier-900 w-full max-w-3xl rounded-[80px] shadow-luxury overflow-hidden animate-in zoom-in-95 duration-1000 border border-white/10">
+      <div className="relative bg-atelier-100 dark:bg-atelier-900 w-full max-w-3xl rounded-[80px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-1000 border border-white/10">
         <div className="p-20 sm:p-28">
           <div className="flex justify-between items-center mb-20">
-            <h2 className="text-6xl font-black text-atelier-900 dark:text-atelier-50 tracking-tighter font-serif leading-none italic">Secure Reservation</h2>
+            <h2 className="text-6xl font-black text-atelier-900 dark:text-atelier-50 tracking-tighter font-serif leading-none italic">Reservation</h2>
             <button onClick={onClose} className="p-5 hover:bg-atelier-200 dark:hover:bg-atelier-800 rounded-full text-atelier-900 dark:text-atelier-50 transition-all">
               <X size={40} />
             </button>
@@ -367,7 +367,7 @@ const CheckoutModal = ({ isOpen, onClose, onSubmit }: { isOpen: boolean, onClose
                 required
                 value={formData.customerName}
                 onChange={e => setFormData({...formData, customerName: e.target.value})}
-                className="w-full bg-white dark:bg-atelier-950 border border-atelier-200 dark:border-atelier-800 p-10 rounded-[48px] outline-none focus:ring-4 focus:ring-atelier-900 transition-all font-bold text-2xl shadow-glass" 
+                className="w-full bg-white dark:bg-atelier-950 border border-atelier-200 dark:border-atelier-800 p-10 rounded-[48px] outline-none focus:ring-4 focus:ring-atelier-900 transition-all font-bold text-2xl" 
                 placeholder={t.checkout.namePlaceholder} 
               />
             </div>
@@ -377,7 +377,7 @@ const CheckoutModal = ({ isOpen, onClose, onSubmit }: { isOpen: boolean, onClose
                 required
                 value={formData.customerPhone}
                 onChange={e => setFormData({...formData, customerPhone: e.target.value})}
-                className="w-full bg-white dark:bg-atelier-950 border border-atelier-200 dark:border-atelier-800 p-10 rounded-[48px] outline-none focus:ring-4 focus:ring-atelier-900 transition-all font-bold text-2xl shadow-glass" 
+                className="w-full bg-white dark:bg-atelier-950 border border-atelier-200 dark:border-atelier-800 p-10 rounded-[48px] outline-none focus:ring-4 focus:ring-atelier-900 transition-all font-bold text-2xl" 
                 placeholder={t.checkout.phonePlaceholder} 
               />
             </div>
@@ -392,7 +392,7 @@ const CheckoutModal = ({ isOpen, onClose, onSubmit }: { isOpen: boolean, onClose
               </button>
               <button 
                 disabled={loading}
-                className="flex-[2] bg-atelier-900 dark:bg-accent-500 text-white dark:text-atelier-900 py-9 rounded-full font-black text-3xl hover:scale-105 transition-all shadow-luxury disabled:opacity-50 flex items-center justify-center gap-6 uppercase tracking-[0.3em]"
+                className="flex-[2] bg-atelier-900 dark:bg-accent-500 text-white dark:text-atelier-900 py-9 rounded-full font-black text-3xl hover:scale-105 transition-all shadow-2xl disabled:opacity-50 flex items-center justify-center gap-6 uppercase tracking-[0.3em]"
               >
                 {loading ? t.checkout.sending : t.checkout.confirm}
                 <ArrowRight size={32} />
@@ -475,7 +475,7 @@ export default function App() {
   return (
     <LanguageContext.Provider value={{ lang, setLang, t, isDark, toggleTheme, showToast }}>
       <Router>
-        <div className="min-h-screen flex flex-col transition-colors duration-700">
+        <div className="min-h-screen flex flex-col transition-all duration-700 bg-atelier-50 dark:bg-atelier-950">
           <Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
           
           <main className="flex-1 pt-24">
@@ -483,20 +483,20 @@ export default function App() {
               <Route path="/" element={
                 <div className="space-y-64 pb-64">
                   <section className="px-4 lg:px-8 pt-16">
-                    <div className="max-w-7xl mx-auto h-[920px] rounded-[120px] overflow-hidden relative flex items-center shadow-luxury">
+                    <div className="max-w-7xl mx-auto h-[920px] rounded-[120px] overflow-hidden relative flex items-center shadow-2xl">
                       <div className="absolute inset-0 bg-gradient-to-r from-atelier-950/80 via-atelier-950/20 to-transparent z-10" />
                       <img src="https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&q=80&w=2000" className="absolute inset-0 w-full h-full object-cover scale-100 hover:scale-110 transition-transform duration-[25s] ease-linear" alt="Luxury Soap" />
                       <div className="relative z-20 px-16 lg:px-32 max-w-6xl space-y-20 animate-in fade-in slide-in-from-left-24 duration-1000">
                         <div className="inline-flex items-center gap-5 px-10 py-4 bg-white/10 backdrop-blur-3xl rounded-full text-atelier-50 text-[11px] font-black tracking-[0.6em] uppercase border border-white/20">
                            Divine Botanics
                         </div>
-                        <h1 className="text-[130px] lg:text-[200px] font-black text-white leading-[0.7] tracking-tighter font-serif italic drop-shadow-luxury">
+                        <h1 className="text-[130px] lg:text-[200px] font-black text-white leading-[0.7] tracking-tighter font-serif italic drop-shadow-2xl">
                           {t.home.heroTitle}
                         </h1>
                         <p className="text-3xl lg:text-4xl text-white/70 leading-relaxed font-light max-w-4xl italic font-serif">
                           {t.home.heroSubtitle}
                         </p>
-                        <Link to="/products" className="inline-flex items-center gap-8 bg-white text-atelier-900 px-20 py-9 rounded-full font-black text-2xl hover:scale-110 hover:shadow-luxury transition-all duration-700 uppercase tracking-[0.3em]">
+                        <Link to="/products" className="inline-flex items-center gap-8 bg-white text-atelier-900 px-20 py-9 rounded-full font-black text-2xl hover:scale-110 hover:shadow-2xl transition-all duration-700 uppercase tracking-[0.3em]">
                           The Gallery <ArrowRight size={36} />
                         </Link>
                       </div>
@@ -509,11 +509,11 @@ export default function App() {
                         <h2 className="text-[100px] font-black text-atelier-900 dark:text-atelier-50 tracking-tighter font-serif italic leading-[0.8]">{t.home.popularTitle}</h2>
                         <p className="text-3xl text-atelier-900/30 dark:text-atelier-500 font-medium italic font-serif max-w-3xl">{t.home.popularSubtitle}</p>
                       </div>
-                      <Link to="/products" className="group flex items-center gap-6 font-black text-atelier-900 dark:text-atelier-50 bg-atelier-100 dark:bg-atelier-800 px-14 py-8 rounded-full hover:bg-atelier-900 hover:text-white dark:hover:bg-accent-500 dark:hover:text-atelier-900 transition-all shadow-glass uppercase tracking-[0.3em] text-xs">
+                      <Link to="/products" className="group flex items-center gap-6 font-black text-atelier-900 dark:text-atelier-50 bg-atelier-100 dark:bg-atelier-800 px-14 py-8 rounded-full hover:bg-atelier-900 hover:text-white dark:hover:bg-accent-500 dark:hover:text-atelier-900 transition-all shadow-xl uppercase tracking-[0.3em] text-xs">
                         {t.home.viewAll} <ArrowRight size={24} className="group-hover:translate-x-4 transition-transform" />
                       </Link>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-24">
                       {INITIAL_DB.products.map((p) => <ProductCard key={p.id} product={p} addToCart={addToCart} />)}
                     </div>
                   </section>
@@ -526,7 +526,7 @@ export default function App() {
                     <h1 className="text-[120px] font-black tracking-tighter text-atelier-900 dark:text-atelier-50 leading-none font-serif italic">{t.nav.products}</h1>
                     <p className="text-4xl text-atelier-900/20 dark:text-atelier-600 font-serif italic leading-relaxed">The sanctuary of high-end purification and olfactory excellence.</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-24">
                     {INITIAL_DB.products.map(p => <ProductCard key={p.id} product={p} addToCart={addToCart} />)}
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative rounded-[120px] overflow-hidden shadow-luxury aspect-[4/5] group">
+                    <div className="relative rounded-[120px] overflow-hidden shadow-2xl aspect-[4/5] group">
                       <img src={INITIAL_DB.about.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[4s]" alt="Atelier Craft" />
                     </div>
                   </div>
@@ -571,9 +571,9 @@ export default function App() {
                     </div>
                     
                     <div className="space-y-20">
-                      {[{icon: <Phone />, label: 'VIP Concierge', val: INITIAL_DB.companyInfo.phone}, {icon: <Send />, label: 'Secret Portal', val: `@${INITIAL_DB.companyInfo.telegram}`}, {icon: <Instagram />, label: 'Visual Archives', val: `@${INITIAL_DB.companyInfo.instagram}`}].map((item, i) => (
-                        <div key={i} className="flex items-center gap-14 group cursor-pointer p-6 rounded-[56px] hover:bg-white dark:hover:bg-atelier-800 transition-all duration-700 shadow-glass">
-                          <div className="w-28 h-28 bg-atelier-900 dark:bg-atelier-100 text-accent-400 dark:text-accent-500 rounded-[40px] flex items-center justify-center shadow-luxury group-hover:scale-110 transition-transform">{item.icon}</div>
+                      {[{icon: <Phone />, label: 'Concierge Support', val: INITIAL_DB.companyInfo.phone}, {icon: <Send />, label: 'Telegram Portal', val: `@${INITIAL_DB.companyInfo.telegram}`}, {icon: <Instagram />, label: 'Visual Archives', val: `@${INITIAL_DB.companyInfo.instagram}`}].map((item, i) => (
+                        <div key={i} className="flex items-center gap-14 group cursor-pointer p-6 rounded-[56px] hover:bg-white dark:hover:bg-atelier-800 transition-all duration-700 shadow-lg">
+                          <div className="w-28 h-28 bg-atelier-900 dark:bg-atelier-100 text-accent-400 dark:text-accent-500 rounded-[40px] flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">{item.icon}</div>
                           <div>
                             <div className="text-[12px] font-black uppercase text-atelier-900/20 dark:text-atelier-500 tracking-[0.6em] mb-3">{item.label}</div>
                             <div className="text-4xl font-black text-atelier-900 dark:text-atelier-50 font-serif italic">{item.val}</div>
@@ -582,8 +582,8 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                  <div className="bg-atelier-900 rounded-[100px] p-24 sm:p-32 text-white shadow-luxury border border-white/5 space-y-16">
-                    <h3 className="text-6xl font-black tracking-tighter font-serif italic">The Inquiry</h3>
+                  <div className="bg-atelier-900 rounded-[100px] p-24 sm:p-32 text-white shadow-2xl border border-white/5 space-y-16">
+                    <h3 className="text-6xl font-black tracking-tighter font-serif italic">Inquiry</h3>
                     <form className="space-y-12" onSubmit={async (e) => {
                        e.preventDefault();
                        const target = e.target as any;
@@ -606,7 +606,7 @@ export default function App() {
                         <label className="text-[12px] font-black text-atelier-500 uppercase tracking-[0.6em] ml-8">{t.contact.formMessage}</label>
                         <textarea required className="w-full bg-white/5 border border-white/10 p-10 rounded-[48px] outline-none focus:ring-1 focus:ring-accent-400 font-bold h-64 transition-all text-2xl resize-none" placeholder={t.contact.formMessage} />
                       </div>
-                      <button className="w-full bg-atelier-50 text-atelier-900 py-10 rounded-full font-black text-3xl hover:scale-[1.03] transition-all shadow-luxury uppercase tracking-[0.4em]">
+                      <button className="w-full bg-atelier-50 text-atelier-900 py-10 rounded-full font-black text-3xl hover:scale-[1.03] transition-all shadow-xl uppercase tracking-[0.4em]">
                         {t.contact.send} <ArrowRight size={36} className="inline ml-3" />
                       </button>
                     </form>
@@ -622,7 +622,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-4 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-40">
               <div className="space-y-20">
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 bg-atelier-100 rounded-[40px] flex items-center justify-center text-atelier-950 shadow-luxury"><Leaf size={40} /></div>
+                  <div className="w-20 h-20 bg-atelier-100 rounded-[40px] flex items-center justify-center text-atelier-950 shadow-2xl"><Leaf size={40} /></div>
                   <span className="text-6xl font-black tracking-tighter font-serif italic">SIMOSH</span>
                 </div>
                 <p className="text-atelier-500 font-medium leading-relaxed text-2xl italic font-serif">{INITIAL_DB.companyInfo.description[lang]}</p>
@@ -655,7 +655,7 @@ export default function App() {
                 <div className="space-y-10">
                   <p className="text-atelier-500 text-xl font-medium italic font-serif">Enroll for botanical revelations and early sanctuary access.</p>
                   <div className="relative">
-                    <input className="w-full bg-white/5 border border-white/10 p-9 rounded-[40px] outline-none focus:ring-1 focus:ring-accent-400 font-bold text-xl" placeholder="Avenue Email" />
+                    <input className="w-full bg-white/5 border border-white/10 p-9 rounded-[40px] outline-none focus:ring-1 focus:ring-accent-400 font-bold text-xl" placeholder="Your Email" />
                     <button className="absolute right-4 top-4 bottom-4 bg-atelier-50 text-atelier-900 px-10 rounded-[32px] font-black text-[12px] tracking-widest uppercase hover:scale-105 transition-all">Enroll</button>
                   </div>
                 </div>
@@ -663,7 +663,7 @@ export default function App() {
             </div>
             
             <div className="max-w-7xl mx-auto px-4 lg:px-8 mt-64 pt-20 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-14 opacity-20 text-[12px] font-black uppercase tracking-[0.7em]">
-              <p>&copy; {new Date().getFullYear()} Simosh Atelier. Purist Excellence.</p>
+              <p>&copy; {new Date().getFullYear()} Simosh Atelier. Purest Excellence.</p>
               <div className="flex gap-20">
                 <a href="#" className="hover:opacity-100">Etiquette</a>
                 <a href="#" className="hover:opacity-100">Sacred Data</a>
