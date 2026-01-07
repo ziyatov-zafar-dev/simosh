@@ -3,7 +3,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar, AlertCircle
+  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle, Trash2, Settings, Tag, Calendar, AlertCircle, ChevronDown
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
 import { Product, Language, Database, CompanyInfo, GlobalPromoCode, Category } from './types';
@@ -12,13 +12,15 @@ import { sendOrderToTelegram, sendContactToTelegram } from './services/telegram'
 import SimoshAI from './components/SimoshAI';
 import AdminPanel from './components/AdminPanel';
 
+type ToastType = 'success' | 'warning' | 'error';
+
 export const LanguageContext = createContext<{ 
   lang: Language, 
   setLang: (l: Language) => void, 
   t: any,
   isDark: boolean,
   toggleTheme: () => void,
-  showToast: (msg: string) => void
+  showToast: (msg: string, type?: ToastType) => void
 }>({
   lang: 'uz',
   setLang: () => {},
@@ -27,6 +29,13 @@ export const LanguageContext = createContext<{
   toggleTheme: () => {},
   showToast: () => {}
 });
+
+const flags: Record<Language, string> = {
+  uz: '🇺🇿',
+  ru: '🇷🇺',
+  en: '🇺🇸',
+  tr: '🇹🇷'
+};
 
 const getUzbekistanTime = () => {
   const now = new Date();
@@ -77,14 +86,17 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
     setQuantity(1);
   };
 
+  const getOutOfStockMsg = () => {
+    return lang === 'uz' ? "Boshqa mahsulot qolmagan" : 
+           lang === 'ru' ? "Больше товара нет" : 
+           lang === 'tr' ? "Daha fazla ürün kalmadı" : "No more items left";
+  };
+
   const increaseQuantity = () => {
     if (quantity < product.stock) {
       setQuantity(quantity + 1);
     } else {
-      const msg = lang === 'uz' ? "Boshqa mahsulot qolmagan" : 
-                  lang === 'ru' ? "Больше товара нет" : 
-                  lang === 'tr' ? "Daha fazla ürün kalmadı" : "No more items left";
-      showToast(msg);
+      showToast(getOutOfStockMsg(), 'warning');
     }
   };
 
@@ -109,7 +121,7 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
             </button>
             <div className="flex flex-col items-center">
               <span className="text-2xl font-black">{quantity}</span>
-              <span className="text-[8px] font-bold uppercase opacity-30">Dona</span>
+              <span className="text-[8px] font-bold uppercase opacity-30">{lang === 'uz' ? 'Dona' : 'Qty'}</span>
             </div>
             <button 
               onClick={increaseQuantity}
@@ -161,8 +173,14 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
 
         <div className="pt-2 min-h-[50px] md:min-h-[60px] flex items-center mt-auto">
           <button 
-            onClick={() => setIsConfiguring(true)} 
-            className={`w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
+            onClick={() => {
+              if (product.stock <= 0) {
+                showToast(getOutOfStockMsg(), 'warning');
+              } else {
+                setIsConfiguring(true);
+              }
+            }} 
+            className={`w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] ${product.stock <= 0 ? 'bg-rose-500/20 text-rose-500 grayscale shadow-none' : ''}`}
           >
             {product.stock <= 0 ? <><X size={16} /> Sotuvda yo'q</> : <><Plus size={16} /> Tanlash</>}
           </button>
@@ -175,6 +193,7 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
 const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
 
   const menu = [
@@ -187,6 +206,7 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
 
   useEffect(() => {
     setIsOpen(false);
+    setIsLangOpen(false);
   }, [location]);
 
   return (
@@ -217,13 +237,34 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             
-            <select 
-              value={lang} 
-              onChange={(e) => setLang(e.target.value as Language)}
-              className="bg-transparent text-[10px] md:text-xs font-black uppercase outline-none text-brand-dark dark:text-white cursor-pointer hidden md:block"
-            >
-              {['uz', 'ru', 'en', 'tr'].map(l => <option key={l} value={l} className="bg-white dark:bg-brand-dark">{l}</option>)}
-            </select>
+            <div className="relative hidden md:block">
+              <button 
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="h-8 md:h-10 flex items-center gap-2 px-3 bg-gray-100 dark:bg-white/5 rounded-full text-[10px] md:text-xs font-black uppercase transition-all hover:bg-gray-200 dark:hover:bg-white/10"
+              >
+                <span className="text-base">{flags[lang]}</span>
+                <span className="hidden lg:inline">{lang}</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isLangOpen && (
+                <>
+                  <div className="fixed inset-0 z-0" onClick={() => setIsLangOpen(false)} />
+                  <div className="absolute top-full right-0 mt-2 w-32 bg-white dark:bg-brand-dark border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl p-2 z-10 animate-in fade-in slide-in-from-top-2">
+                    {(['uz', 'ru', 'en', 'tr'] as Language[]).map(l => (
+                      <button
+                        key={l}
+                        onClick={() => { setLang(l); setIsLangOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${lang === l ? 'bg-brand-mint/10 text-brand-mint' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                      >
+                        <span className="text-lg">{flags[l]}</span>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <Link to="/cart" className="relative w-8 h-8 md:w-10 md:h-10 gradient-mint text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
               <ShoppingBag size={16} />
@@ -267,15 +308,16 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
               <Link to="/admin" className="text-xl font-bold uppercase text-gray-400">Admin Panel</Link>
             </div>
             <div className="mt-auto pt-8 border-t border-gray-100 dark:border-white/5 space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4">
                  <span className="text-xs font-black uppercase opacity-40">Tilni tanlang</span>
-                 <div className="flex gap-3">
-                   {['uz', 'ru', 'en', 'tr'].map(l => (
+                 <div className="grid grid-cols-2 gap-3">
+                   {(['uz', 'ru', 'en', 'tr'] as Language[]).map(l => (
                      <button 
                        key={l} 
-                       onClick={() => setLang(l as Language)}
-                       className={`w-8 h-8 text-[10px] font-black rounded-lg uppercase transition-all ${lang === l ? 'gradient-mint text-white shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}
+                       onClick={() => setLang(l)}
+                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[10px] font-black uppercase transition-all ${lang === l ? 'gradient-mint text-white shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}
                      >
+                       <span className="text-lg">{flags[l]}</span>
                        {l}
                      </button>
                    ))}
@@ -322,7 +364,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
   
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string, type: ToastType } | null>(null);
 
   useEffect(() => {
     if (isDark) document.documentElement.classList.add('dark');
@@ -349,13 +391,17 @@ export default function App() {
     }
   }, [toast]);
 
+  const showToast = (msg: string, type: ToastType = 'success') => {
+    setToast({ msg, type });
+  };
+
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prev => {
       const ex = prev.find(i => i.product.id === product.id);
       if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: Math.min(product.stock, i.quantity + quantity)} : i);
       return [...prev, { product, quantity }];
     });
-    setToast(translations[lang].cart.added);
+    showToast(translations[lang].cart.added, 'success');
   };
 
   const updateCartQuantity = (productId: number, delta: number) => {
@@ -365,7 +411,7 @@ export default function App() {
           const msg = lang === 'uz' ? "Boshqa mahsulot qolmagan" : 
                       lang === 'ru' ? "Больше товара нет" : 
                       lang === 'tr' ? "Daha fazla ürün kalmadı" : "No more items left";
-          setToast(msg);
+          showToast(msg, 'warning');
           return item;
         }
         const newQty = Math.max(1, Math.min(item.product.stock, item.quantity + delta));
@@ -382,7 +428,7 @@ export default function App() {
       t: translations[lang], 
       isDark, 
       toggleTheme: () => setIsDark(!isDark), 
-      showToast: (m) => setToast(m) 
+      showToast 
     }}>
       <Router>
         <div className="min-h-screen bg-brand-light dark:bg-brand-dark text-brand-dark dark:text-white transition-colors duration-500 flex flex-col">
@@ -467,12 +513,16 @@ export default function App() {
           </main>
 
           {toast && (
-            <div className="fixed top-16 md:top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-10 duration-500 ease-out px-4 w-full max-w-sm">
-              <div className="bg-white/90 dark:bg-brand-dark/90 backdrop-blur-xl border border-brand-mint/30 px-6 md:px-10 py-3 md:py-4 rounded-full shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center gap-3 md:gap-4 font-black">
-                <div className="w-8 h-8 md:w-10 md:h-10 shrink-0 gradient-mint rounded-full flex items-center justify-center text-white shadow-lg animate-bounce">
-                  <CheckCircle size={18} />
+            <div className="fixed top-16 md:top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-10 duration-500 ease-out px-4 w-full max-w-[90%] md:max-w-lg">
+              <div className={`bg-white/95 dark:bg-brand-dark/95 backdrop-blur-2xl border shadow-2xl ${toast.type === 'warning' ? 'border-amber-500/50' : toast.type === 'error' ? 'border-rose-500/50' : 'border-brand-mint/30'} px-5 md:px-8 py-3 md:py-4 rounded-3xl md:rounded-full flex items-center gap-3 md:gap-5 font-black`}>
+                <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 ${toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-rose-500' : 'gradient-mint'} rounded-full flex items-center justify-center text-white shadow-lg`}>
+                  {toast.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
                 </div>
-                <span className="text-brand-dark dark:text-white uppercase tracking-wider text-[10px] md:text-sm truncate">{toast}</span>
+                <div className="flex-1 min-w-0">
+                  <span className={`${toast.type === 'warning' ? 'text-amber-600 dark:text-amber-400' : toast.type === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-brand-dark dark:text-white'} block uppercase tracking-wider text-[11px] md:text-[13px] leading-tight break-words`}>
+                    {toast.msg}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -490,7 +540,7 @@ const ContactPage = ({ companyInfo }: { companyInfo: CompanyInfo }) => {
     e.preventDefault();
     const success = await sendContactToTelegram({ ...form, language: lang });
     if (success) {
-      showToast(t.contact.success);
+      showToast(t.contact.success, 'success');
       setForm({ name: '', phone: '', message: '' });
     }
   };
@@ -597,7 +647,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     // 5. Success
     setAppliedPromo(code);
     setPromoError(null);
-    showToast(t.cart.promoSuccess);
+    showToast(t.cart.promoSuccess, 'success');
   };
 
   const handleCheckout = async () => {
@@ -614,7 +664,8 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     });
     if (success) {
       setCart([]);
-      showToast(lang === 'uz' ? "Buyurtmangiz qabul qilindi!" : "Your order has been received!");
+      const msg = lang === 'uz' ? "Buyurtmangiz qabul qilindi!" : "Your order has been received!";
+      showToast(msg, 'success');
     }
   };
 
