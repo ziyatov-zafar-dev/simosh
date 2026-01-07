@@ -2,8 +2,8 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  ShoppingBag, Sun, Moon, Plus, ArrowRight, Leaf, 
-  Menu, X, Sparkles, Globe2, Phone, MessageSquare
+  ShoppingBag, Sun, Moon, Plus, Minus, ArrowRight, Leaf, 
+  Menu, X, Sparkles, Globe2, Phone, MessageSquare, CheckCircle
 } from 'lucide-react';
 import { INITIAL_DB } from './constants';
 import { Product, Language } from './types';
@@ -26,6 +26,75 @@ export const LanguageContext = createContext<{
   toggleTheme: () => {},
   showToast: () => {}
 });
+
+const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product, q: number) => void }) => {
+  const { lang, t } = useContext(LanguageContext);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  const handleAddClick = () => {
+    onAdd(product, quantity);
+    setIsConfiguring(false);
+    setQuantity(1);
+  };
+
+  return (
+    <div className="product-card bg-white dark:bg-white/5 p-5 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] mb-6">
+        <img src={product.image} className="w-full h-full object-cover" alt={product.name[lang]} />
+        <div className="absolute top-4 left-4 bg-white/90 dark:bg-brand-dark/90 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+          {product.category[lang]}
+        </div>
+      </div>
+      
+      <div className="px-2 space-y-4">
+        <h3 className="text-2xl font-black">{product.name[lang]}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{product.description[lang]}</p>
+        
+        <div className="flex items-center justify-between pt-4 min-h-[64px]">
+          {!isConfiguring ? (
+            <>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase opacity-40">Narxi</span>
+                <span className="text-2xl font-black text-brand-mint">{product.price.toLocaleString()} <span className="text-xs uppercase">uzs</span></span>
+              </div>
+              <button 
+                onClick={() => setIsConfiguring(true)} 
+                className="w-14 h-14 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
+              >
+                <Plus size={24} />
+              </button>
+            </>
+          ) : (
+            <div className="w-full flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-2xl p-1">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
+                >
+                  <Minus size={18} />
+                </button>
+                <span className="text-xl font-black">{quantity}</span>
+                <button 
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
+              <button 
+                onClick={handleAddClick}
+                className="w-full py-3 gradient-mint text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                {t.cart.add}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Navigation = ({ cartCount }: { cartCount: number }) => {
   const { lang, setLang, t, isDark, toggleTheme } = useContext(LanguageContext);
@@ -99,11 +168,11 @@ export default function App() {
     else document.documentElement.classList.remove('dark');
   }, [isDark]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prev => {
       const ex = prev.find(i => i.product.id === product.id);
-      if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: i.quantity + 1} : i);
-      return [...prev, { product, quantity: 1 }];
+      if (ex) return prev.map(i => i.product.id === product.id ? {...i, quantity: i.quantity + quantity} : i);
+      return [...prev, { product, quantity }];
     });
     setToast(translations[lang].cart.added);
     setTimeout(() => setToast(null), 3000);
@@ -161,27 +230,7 @@ export default function App() {
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                      {INITIAL_DB.products.map(p => (
-                       <div key={p.id} className="product-card bg-white dark:bg-white/5 p-5 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5">
-                          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] mb-6">
-                            <img src={p.image} className="w-full h-full object-cover" alt={p.name[lang]} />
-                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-brand-dark/90 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                              {p.category[lang]}
-                            </div>
-                          </div>
-                          <div className="px-2 space-y-4">
-                            <h3 className="text-2xl font-black">{p.name[lang]}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{p.description[lang]}</p>
-                            <div className="flex items-center justify-between pt-4">
-                              <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase opacity-40">Narxi</span>
-                                <span className="text-2xl font-black text-brand-mint">{p.price.toLocaleString()} <span className="text-xs uppercase">uzs</span></span>
-                              </div>
-                              <button onClick={() => addToCart(p)} className="w-14 h-14 gradient-mint text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all">
-                                <Plus size={24} />
-                              </button>
-                            </div>
-                          </div>
-                       </div>
+                       <ProductCard key={p.id} product={p} onAdd={addToCart} />
                      ))}
                    </div>
                 </div>
@@ -213,9 +262,12 @@ export default function App() {
           </main>
 
           {toast && (
-            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-5">
-              <div className="gradient-mint text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold border-2 border-white/20">
-                <Leaf size={18} /> {toast}
+            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-10 duration-500 ease-out">
+              <div className="bg-white/90 dark:bg-brand-dark/90 backdrop-blur-xl border border-brand-mint/30 px-10 py-4 rounded-full shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center gap-4 font-black">
+                <div className="w-8 h-8 gradient-mint rounded-full flex items-center justify-center text-white">
+                  <CheckCircle size={18} />
+                </div>
+                <span className="text-brand-dark dark:text-white uppercase tracking-wider text-sm">{toast}</span>
               </div>
             </div>
           )}
@@ -325,7 +377,7 @@ const CartPage = ({ cart, setCart }: any) => {
           ))}
         </div>
         <div className="pt-8 border-t border-gray-200 dark:border-white/10 flex justify-between items-center">
-           <span className="text-xl font-bold opacity-40">Jami:</span>
+           <span className="text-xl font-bold opacity-40">{t.cart.total}:</span>
            <span className="text-4xl font-black text-brand-mint">{total.toLocaleString()} <span className="text-sm">UZS</span></span>
         </div>
       </div>
