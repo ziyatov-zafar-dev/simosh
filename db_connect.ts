@@ -1,22 +1,21 @@
 
-/**
- * Ushbu fayl backend serverda MongoDBga ulanish uchun ishlatiladi.
- * Frontend brauzer muhitida to'g'ridan-to'g'ri MongoDB driverini ishlatib bo'lmaydi.
- */
 import { MongoClient } from "mongodb";
+import { APP_CONFIG } from './constants';
 
-const uri = "mongodb://127.0.0.1:27017"; 
+const uri = APP_CONFIG.mongodbUri; 
 const client = new MongoClient(uri);
 
 let clientPromise: Promise<MongoClient>;
 
-// @ts-ignore
-if (!global._mongoClientPromise) {
-  // @ts-ignore
-  global._mongoClientPromise = client.connect();
-}
+// Browser muhitida 'global' o'rniga 'window' yoki 'self' ishlatiladi, 
+// lekin sandbox muhiti uchun globalThis eng xavfsiz tanlov.
+const globalWithMongo = globalThis as typeof globalThis & {
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
-// @ts-ignore
-clientPromise = global._mongoClientPromise;
+if (!globalWithMongo._mongoClientPromise) {
+  globalWithMongo._mongoClientPromise = client.connect();
+}
+clientPromise = globalWithMongo._mongoClientPromise;
 
 export default clientPromise;
