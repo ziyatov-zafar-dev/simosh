@@ -76,7 +76,7 @@ const ProductCard = ({ product, onAdd }: { product: Product, onAdd: (p: Product,
                 </button>
                 <span className="text-lg md:text-xl font-black">{quantity}</span>
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={quantity >= 99 ? undefined : () => setQuantity(quantity + 1)}
                   className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
                 >
                   <Plus size={14} />
@@ -118,8 +118,8 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
       <nav className="fixed top-4 md:top-6 left-0 w-full z-50 px-4">
         <div className="max-w-6xl mx-auto glass-nav rounded-full shadow-xl py-2 md:py-3 px-4 md:px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 md:w-10 md:h-10 gradient-mint rounded-full flex items-center justify-center text-white shadow-lg">
-               <Leaf size={16} />
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-brand-dark rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+               <img src={INITIAL_DB.companyInfo.logo} className="w-full h-full object-contain" alt="Logo" />
             </div>
             <span className="text-lg md:text-xl font-black tracking-tighter text-brand-dark dark:text-white uppercase">SIMOSH</span>
           </Link>
@@ -171,7 +171,10 @@ const Navigation = ({ cartCount }: { cartCount: number }) => {
         <div className={`absolute right-0 top-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-brand-dark shadow-2xl transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="p-8 flex flex-col h-full">
             <div className="flex justify-between items-center mb-12">
-              <span className="text-2xl font-black tracking-tighter uppercase text-brand-mint">SIMOSH</span>
+              <div className="flex items-center gap-2">
+                 <img src={INITIAL_DB.companyInfo.logo} className="w-8 h-8 object-contain" alt="Logo" />
+                 <span className="text-2xl font-black tracking-tighter uppercase text-brand-mint">SIMOSH</span>
+              </div>
               <button onClick={() => setIsOpen(false)} className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full">
                 <X size={24} />
               </button>
@@ -241,6 +244,16 @@ export default function App() {
     localStorage.setItem('simosh_cart', JSON.stringify(cart));
   }, [cart]);
 
+  // Handle automatic toast removal after 5 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prev => {
       const ex = prev.find(i => i.product.id === product.id);
@@ -248,7 +261,6 @@ export default function App() {
       return [...prev, { product, quantity }];
     });
     setToast(translations[lang].cart.added);
-    setTimeout(() => setToast(null), 3000);
   };
 
   const updateCartQuantity = (productId: string, delta: number) => {

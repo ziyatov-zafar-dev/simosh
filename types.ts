@@ -14,6 +14,7 @@ export interface Product {
 
 export interface CompanyInfo {
   name: string;
+  logo: string;
   description: LocalizedString;
   phone: string;
   email: string;

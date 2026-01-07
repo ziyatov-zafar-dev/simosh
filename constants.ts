@@ -4,6 +4,7 @@ import { Database } from './types';
 export const INITIAL_DB: Database = {
   companyInfo: {
     name: "Simosh Atelier",
+    logo: "https://img.icons8.com/ios-filled/100/10B981/leaf.png",
     description: {
       uz: "Simosh — tabiatning eng sof moddalari va zamonaviy botanika ilmi uyg'unlashgan premium sovunlar atelyesi.",
       ru: "Simosh — ателье премиального мыла, где чистейшие природные компоненты встречаются с современной ботанической наукой.",
