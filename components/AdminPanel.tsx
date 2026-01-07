@@ -131,6 +131,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
     code: '',
     type: 'PERCENT',
     value: 0,
+    min_amount: 10000,
     expiry_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     is_active: true
   });
@@ -222,7 +223,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                     <h4 className="text-xl font-black uppercase tracking-widest">{promo.code}</h4>
                     <p className="text-xs font-bold opacity-50">
                       {promo.type === 'PERCENT' ? `${promo.value}%` : `${promo.value.toLocaleString()} UZS`} • 
-                      Amal qilish muddati: {new Date(promo.expiry_date).toLocaleDateString()}
+                      Min: {promo.min_amount?.toLocaleString()} UZS
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -292,7 +293,7 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Qiymat</label>
+                        <label className="text-[10px) font-black uppercase opacity-40 ml-2">Qiymat</label>
                         <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.value || 0} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { start_date: '', end_date: '', type: 'PERCENT' }), value: Number(e.target.value) } })} />
                       </div>
                       <div className="space-y-2">
@@ -340,6 +341,11 @@ export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (
                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Qiymat</label>
                   <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.value} onChange={e => setEditingPromo({...editingPromo!, value: Number(e.target.value)})} />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase opacity-40 ml-2">Minimal Summa (UZS)</label>
+                <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.min_amount} onChange={e => setEditingPromo({...editingPromo!, min_amount: Number(e.target.value)})} />
               </div>
               
               <div className="space-y-2">

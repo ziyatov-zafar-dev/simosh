@@ -28,10 +28,19 @@ export const LanguageContext = createContext<{
   showToast: () => {}
 });
 
-// Helper to get current time in Uzbekistan (Asia/Tashkent)
 const getUzbekistanTime = () => {
   const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tashkent" }));
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tashkent',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const map: any = {};
+  parts.forEach(({type, value}) => map[type] = value);
+  return new Date(`${map.year}-${map.month.padStart(2, '0')}-${map.day.padStart(2, '0')}T${map.hour.padStart(2, '0')}:${map.minute.padStart(2, '0')}:${map.second.padStart(2, '0')}`);
 };
 
 const isDateActive = (start?: string, end?: string) => {
@@ -39,7 +48,6 @@ const isDateActive = (start?: string, end?: string) => {
   const now = getUzbekistanTime();
   const startDate = new Date(start);
   const endDate = new Date(end);
-  
   return now >= startDate && now <= endDate;
 };
 
@@ -70,9 +78,9 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
   };
 
   return (
-    <div className="product-card bg-white dark:bg-white/5 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden flex flex-col h-full">
+    <div className="product-card bg-white dark:bg-white/5 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-white/5 relative overflow-hidden flex flex-col h-full group">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] md:rounded-[2rem] mb-4 md:mb-6">
-        <img src={product.image} className="w-full h-full object-cover" alt={product.translations[lang].name} />
+        <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={product.translations[lang].name} />
         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-white/90 dark:bg-brand-dark/90 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg">
           {categoryName}
         </div>
@@ -90,39 +98,37 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
         </div>
         <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">{product.translations[lang].description}</p>
         
-        <div className="pt-2 md:pt-4 min-h-[90px] md:min-h-[100px] flex flex-col justify-end">
-          {/* Price display - always visible */}
-          <div className="flex flex-col mb-3">
-            <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
-            {activeDiscount ? (
-              <div className="flex flex-col">
-                <span className="text-xs line-through opacity-40 leading-none">{product.price.toLocaleString()} {product.currency}</span>
-                <span className="text-xl md:text-2xl font-black text-rose-500 leading-tight">{effectivePrice.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
-              </div>
-            ) : (
-              <span className="text-xl md:text-2xl font-black text-brand-mint leading-tight">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
-            )}
-          </div>
-
-          {!isConfiguring ? (
-            <div className="flex items-center justify-end">
-              <button 
-                onClick={() => setIsConfiguring(true)} 
-                className={`w-12 h-12 md:w-14 md:h-14 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
-              >
-                {product.stock <= 0 ? <X size={20} /> : <Plus size={20} />}
-              </button>
+        {/* Fixed Price Section - Now always visible outside configuration toggle */}
+        <div className="flex flex-col border-t border-gray-50 dark:border-white/5 pt-3 mb-2">
+          <span className="text-[8px] md:text-[10px] font-black uppercase opacity-40">Narxi</span>
+          {activeDiscount ? (
+            <div className="flex items-end gap-2">
+              <span className="text-xl md:text-2xl font-black text-rose-500 leading-none">{effectivePrice.toLocaleString()} <span className="text-[10px] uppercase">{product.currency}</span></span>
+              <span className="text-xs line-through opacity-30 mb-0.5">{product.price.toLocaleString()}</span>
             </div>
           ) : (
-            <div className="w-full space-y-2 md:space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-xl md:rounded-2xl p-1 border border-brand-mint/20">
+            <span className="text-xl md:text-2xl font-black text-brand-mint leading-none">{product.price.toLocaleString()} <span className="text-[10px] md:text-xs uppercase">{product.currency}</span></span>
+          )}
+        </div>
+
+        <div className="pt-2 min-h-[50px] md:min-h-[60px] flex items-center mt-auto">
+          {!isConfiguring ? (
+            <button 
+              onClick={() => setIsConfiguring(true)} 
+              className={`w-full py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] ${product.stock <= 0 ? 'opacity-20 pointer-events-none grayscale' : ''}`}
+            >
+              {product.stock <= 0 ? <><X size={16} /> Sotuvda yo'q</> : <><Plus size={16} /> Tanlash</>}
+            </button>
+          ) : (
+            <div className="w-full flex gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex-1 flex items-center justify-between bg-gray-100 dark:bg-white/10 rounded-xl md:rounded-2xl p-1 border border-brand-mint/20">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="text-lg md:text-xl font-black">{quantity}</span>
+                <span className="text-sm md:text-lg font-black">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                   className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white dark:bg-white/10 shadow-sm text-brand-dark dark:text-white"
@@ -130,20 +136,18 @@ const ProductCard = ({ product, categories, onAdd }: { product: Product, categor
                   <Plus size={14} />
                 </button>
               </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setIsConfiguring(false)}
-                  className="px-4 py-3 md:py-4 bg-gray-200 dark:bg-white/10 text-brand-dark dark:text-white rounded-xl md:rounded-2xl font-black text-[10px] transition-all"
-                >
-                  <X size={14} />
-                </button>
-                <button 
-                  onClick={handleAddClick}
-                  className="flex-1 py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <ShoppingBag size={14} /> {t.cart.add}
-                </button>
-              </div>
+              <button 
+                onClick={handleAddClick}
+                className="px-6 md:px-8 py-3 md:py-4 gradient-mint text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <ShoppingBag size={14} /> {t.cart.add}
+              </button>
+              <button 
+                onClick={() => setIsConfiguring(false)}
+                className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-gray-100 dark:bg-white/10 rounded-xl md:rounded-2xl text-gray-400"
+              >
+                <X size={16} />
+              </button>
             </div>
           )}
         </div>
@@ -217,10 +221,6 @@ const Navigation = ({ cartCount, db }: { cartCount: number, db: Database }) => {
             <button onClick={() => setIsOpen(true)} className="lg:hidden w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-brand-dark dark:text-white">
               <Menu size={18} />
             </button>
-
-            <Link to="/admin" className="hidden sm:flex w-8 h-8 md:w-10 md:h-10 items-center justify-center bg-gray-100 dark:bg-white/5 rounded-full text-gray-400 hover:text-brand-mint transition-colors">
-              <Settings size={16} />
-            </Link>
           </div>
         </div>
       </nav>
@@ -538,28 +538,34 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
     const inputCode = promoInput.trim().toUpperCase();
     if (!inputCode) return;
 
-    // Search in current props
     const code = (promoCodes || []).find((p: GlobalPromoCode) => p.code.trim().toUpperCase() === inputCode);
     
     if (!code) {
-      setPromoError(lang === 'uz' ? "Bunday promo-kod mavjud emas!" : "Promo code not found!");
+      setPromoError(t.cart.promoErrorNotFound);
       setAppliedPromo(null);
       return;
     }
 
-    // Check expiry using Asia/Tashkent time
     const now = getUzbekistanTime();
     const expiryDate = new Date(code.expiry_date);
     
     if (!code.is_active || now > expiryDate) {
-      setPromoError(lang === 'uz' ? "Promo-kod muddati o'tgan yoki faol emas!" : "Promo code expired or inactive!");
+      setPromoError(t.cart.promoErrorExpired);
+      setAppliedPromo(null);
+      return;
+    }
+
+    // New check: Minimum order amount
+    if (subtotal < code.min_amount) {
+      const msg = t.cart.promoErrorMinAmount.replace('{amount}', code.min_amount.toLocaleString());
+      setPromoError(msg);
       setAppliedPromo(null);
       return;
     }
 
     setAppliedPromo(code);
     setPromoError(null);
-    showToast(lang === 'uz' ? "Promo-kod muvaffaqiyatli qo'llanildi!" : "Promo code applied successfully!");
+    showToast(t.cart.promoSuccess);
   };
 
   const handleCheckout = async () => {
@@ -624,7 +630,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
         </div>
 
         <div className="bg-white dark:bg-white/5 p-5 md:p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm space-y-4">
-          <label className="text-xs font-black uppercase opacity-40 ml-2">Promo-kod</label>
+          <label className="text-xs font-black uppercase opacity-40 ml-2">{t.cart.promoLabel}</label>
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <input 
@@ -646,7 +652,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
               onClick={handleApplyPromo}
               className="px-6 py-4 gradient-mint text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0"
             >
-              {lang === 'uz' ? "Qo'llash" : "Apply"}
+              {t.cart.promoApply}
             </button>
           </div>
           {appliedPromo && (
@@ -656,7 +662,7 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
                     <Tag size={16} />
                  </div>
                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase opacity-60">Qo'llanilgan kod</span>
+                    <span className="text-[10px] font-black uppercase opacity-60">{t.cart.promoLabel}</span>
                     <span className="text-sm font-black uppercase tracking-widest">{appliedPromo.code}</span>
                  </div>
                </div>
@@ -672,12 +678,12 @@ const CartPage = ({ cart, setCart, onUpdateQty, promoCodes = [] }: { cart: any, 
 
         <div className="pt-6 md:pt-8 space-y-4 bg-gray-50 dark:bg-white/5 p-6 rounded-[2rem] border border-gray-100 dark:border-white/5">
            <div className="flex justify-between items-center text-sm font-bold opacity-40">
-             <span>Summa:</span>
+             <span>{t.cart.subtotal}:</span>
              <span>{subtotal.toLocaleString()} {cart[0]?.product.currency}</span>
            </div>
            {appliedPromo && (
              <div className="flex justify-between items-center text-sm font-bold text-rose-500">
-               <span className="flex items-center gap-2"><Tag size={14} /> Promo-kod chegirmasi:</span>
+               <span className="flex items-center gap-2"><Tag size={14} /> {t.cart.promoDiscount}:</span>
                <span>-{calculateDiscount().toLocaleString()} {cart[0]?.product.currency}</span>
              </div>
            )}

@@ -85,6 +85,8 @@ export const INITIAL_DB: Database = {
       code: "SIMOSH2025",
       type: "PERCENT",
       value: 10,
+      // Added missing min_amount to satisfy GlobalPromoCode interface
+      min_amount: 50000,
       expiry_date: "2026-12-31T23:59:59Z",
       is_active: true
     }

@@ -20,6 +20,7 @@ export interface GlobalPromoCode {
   code: string;
   type: 'PERCENT' | 'FIXED';
   value: number;
+  min_amount: number;
   expiry_date: string;
   is_active: boolean;
 }
