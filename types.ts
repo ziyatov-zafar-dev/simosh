@@ -55,19 +55,10 @@ export interface CompanyInfo {
   telegram: string;
 }
 
-export interface Database {
-  companyInfo: CompanyInfo;
-  products: Product[];
-  categories: Category[];
-  promoCodes: GlobalPromoCode[];
-  about: {
-    title: LocalizedString;
-    content: LocalizedString;
-    image: string;
-  };
-}
+export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 export interface OrderData {
+  id: string;
   firstName: string;
   lastName: string;
   customerPhone: string;
@@ -80,4 +71,19 @@ export interface OrderData {
   language: Language;
   appliedPromo?: string;
   discountAmount?: number;
+  status: OrderStatus;
+  createdAt: string;
+}
+
+export interface Database {
+  companyInfo: CompanyInfo;
+  products: Product[];
+  categories: Category[];
+  promoCodes: GlobalPromoCode[];
+  orders: OrderData[];
+  about: {
+    title: LocalizedString;
+    content: LocalizedString;
+    image: string;
+  };
 }

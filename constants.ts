@@ -91,6 +91,8 @@ export const INITIAL_DB: Database = {
       is_active: true
     }
   ],
+  // Fix: Added missing required orders property to satisfy Database interface
+  orders: [],
   about: {
     title: {
       uz: "Bizning falsafamiz",

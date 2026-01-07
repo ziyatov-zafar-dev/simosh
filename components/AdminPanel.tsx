@@ -1,540 +1,159 @@
 
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
-  LayoutDashboard, Package, Building2, Info, LogOut, 
-  Plus, Edit, Trash2, Save, X, Image as ImageIcon,
-  CheckCircle, AlertCircle, Loader2, Tag, Calendar, Box, Activity, Ticket, KeyRound, ArrowLeft,
-  Eye, EyeOff, Upload, Camera
+  LayoutDashboard, Package, Building2, LogOut, 
+  Trash2, Save, X, CheckCircle, Ticket, Activity, Eye, EyeOff, Check, Ban, Clock
 } from 'lucide-react';
 import { LanguageContext } from '../App';
-import { Product, CompanyInfo, Database, Language, GlobalPromoCode, Category } from '../types';
-import { loginAdmin, logoutAdmin, isAdminAuthenticated, updateAdminPassword } from '../services/auth';
+import { Product, CompanyInfo, Database, OrderData, OrderStatus } from '../types';
+import { loginAdmin, logoutAdmin, isAdminAuthenticated } from '../services/auth';
 
 export default function AdminPanel({ db, onUpdate }: { db: Database, onUpdate: (newDb: Database) => void }) {
-  const { lang, t, showToast } = useContext(LanguageContext);
+  const { lang, showToast } = useContext(LanguageContext);
   const [isAuthenticated, setIsAuthenticated] = useState(isAdminAuthenticated());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'promos' | 'company' | 'about'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'company'>('dashboard');
   
-  // Login States
-  const [view, setView] = useState<'login' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Password Visibility States
   const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Admin States
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<GlobalPromoCode | null>(null);
-  const [isAddingPromo, setIsAddingPromo] = useState(false);
-
-  const productFileRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated) {
     const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
-      setLoading(true);
       const success = await loginAdmin(email, password);
       if (success) {
         setIsAuthenticated(true);
-        showToast("Xush kelibsiz, Admin!");
-      } else {
-        showToast("Email yoki parol noto'g'ri!");
-      }
-      setLoading(false);
-    };
-
-    const handleResetPassword = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (newPassword !== confirmPassword) {
-        showToast("Parollar mos kelmadi!");
-        return;
-      }
-      if (newPassword.length < 6) {
-        showToast("Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
-        return;
-      }
-
-      setLoading(true);
-      await updateAdminPassword(newPassword);
-      showToast("Parol muvaffaqiyatli yangilandi!");
-      setView('login');
-      setPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setLoading(false);
+        showToast("Xush kelibsiz!");
+      } else showToast("Email yoki parol noto'g'ri!", 'error');
     };
 
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-6">
-        <div className="w-full max-w-md bg-white dark:bg-white/5 p-8 md:p-12 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 animate-in fade-in zoom-in duration-500">
-          
-          {view === 'login' ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="text-center space-y-2 mb-8">
-                <div className="w-20 h-20 bg-brand-mint/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="text-brand-mint w-10 h-10" />
-                </div>
-                <h2 className="text-3xl font-black uppercase tracking-tight">Admin Login</h2>
-                <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Simosh Atelier Boshqaruvi</p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Email</label>
-                  <input required type="email" placeholder="email@example.com" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" value={email} onChange={e => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parol</label>
-                  <div className="relative">
-                    <input 
-                      required 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
-                      value={password} 
-                      onChange={e => setPassword(e.target.value)} 
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" disabled={loading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
-                {loading ? <Loader2 className="animate-spin" /> : "Kirish"}
-              </button>
-
-              <button type="button" onClick={() => setView('forgot')} className="w-full text-center text-xs font-black uppercase tracking-widest text-gray-400 hover:text-brand-mint transition-colors">
-                Parolni unutdingizmi?
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              <div className="text-center space-y-2 mb-8">
-                <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <KeyRound className="text-amber-500 w-10 h-10" />
-                </div>
-                <h2 className="text-3xl font-black uppercase tracking-tight">Parolni tiklash</h2>
-                <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Yangi parol o'rnating</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Yangi parol</label>
-                  <div className="relative">
-                    <input 
-                      required 
-                      type={showNewPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
-                      value={newPassword} 
-                      onChange={e => setNewPassword(e.target.value)} 
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
-                    >
-                      {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Parolni tasdiqlash</label>
-                  <div className="relative">
-                    <input 
-                      required 
-                      type={showConfirmPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="w-full p-5 pr-14 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-brand-mint font-bold" 
-                      value={confirmPassword} 
-                      onChange={e => setConfirmPassword(e.target.value)} 
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-brand-mint transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" disabled={loading} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2">
-                {loading ? <Loader2 className="animate-spin" /> : "Parolni yangilash"}
-              </button>
-
-              <button type="button" onClick={() => setView('login')} className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-brand-dark dark:hover:text-white transition-colors">
-                <ArrowLeft size={14} /> Ortga qaytish
-              </button>
-            </form>
-          )}
-        </div>
+        <form onSubmit={handleLogin} className="w-full max-w-md bg-white dark:bg-white/5 p-10 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-white/5 space-y-6">
+          <div className="text-center space-y-2 mb-8">
+            <h2 className="text-3xl font-black uppercase tracking-tight">Admin Login</h2>
+            <p className="text-sm opacity-50 font-bold uppercase tracking-widest">Simosh Atelier</p>
+          </div>
+          <div className="space-y-4">
+            <input required type="email" placeholder="Email" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" value={email} onChange={e => setEmail(e.target.value)} />
+            <div className="relative">
+              <input required type={showPassword ? "text" : "password"} placeholder="Parol" className="w-full p-5 rounded-2xl bg-gray-50 dark:bg-white/5 outline-none font-bold" value={password} onChange={e => setPassword(e.target.value)} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400">{showPassword ? <EyeOff /> : <Eye />}</button>
+            </div>
+          </div>
+          <button type="submit" className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Kirish</button>
+        </form>
       </div>
     );
   }
 
-  const handleLogout = () => {
-    logoutAdmin();
-    setIsAuthenticated(false);
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    const updatedOrders = db.orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+    onUpdate({ ...db, orders: updatedOrders });
+    showToast(`Buyurtma holati o'zgartirildi: ${newStatus}`);
   };
 
-  const handleUpdateCompany = (field: keyof CompanyInfo, value: any) => {
-    onUpdate({ ...db, companyInfo: { ...db.companyInfo, [field]: value } });
-    showToast("Ma'lumotlar saqlandi");
+  const getStats = () => {
+    const orders = db.orders || [];
+    const completed = orders.filter(o => o.status === 'COMPLETED');
+    const cancelled = orders.filter(o => o.status === 'CANCELLED');
+    const pending = orders.filter(o => o.status === 'PENDING');
+    const totalSales = completed.reduce((sum, o) => sum + o.totalPrice, 0);
+
+    return { total: orders.length, completed: completed.length, cancelled: cancelled.length, pending: pending.length, totalSales };
   };
 
-  const handleDeleteProduct = (id: number) => {
-    if (confirm("Haqiqatan ham ushbu mahsulotni o'chirmoqchimisiz?")) {
-      onUpdate({ ...db, products: db.products.filter(p => p.id !== id) });
-      showToast("Mahsulot o'chirildi");
-    }
-  };
-
-  const handleSaveProduct = (product: Product) => {
-    const newProducts = [...db.products];
-    const index = newProducts.findIndex(p => p.id === product.id);
-    if (index > -1) newProducts[index] = product;
-    else newProducts.push(product);
-    onUpdate({ ...db, products: newProducts });
-    setEditingProduct(null);
-    setIsAddingProduct(false);
-    showToast("Mahsulot saqlandi");
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && editingProduct) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Simulating the path images/products/filename. 
-        // In a real server environment, we would upload the file.
-        // Here we store as Base64 so it persists in the local DB (localStorage).
-        setEditingProduct({ ...editingProduct, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDeletePromo = (id: string) => {
-    if (confirm("Ushbu promo-kodni o'chirmoqchimisiz?")) {
-      onUpdate({ ...db, promoCodes: db.promoCodes.filter(p => p.id !== id) });
-      showToast("Promo-kod o'chirildi");
-    }
-  };
-
-  const handleSavePromo = (promo: GlobalPromoCode) => {
-    const newPromos = [...db.promoCodes];
-    const index = newPromos.findIndex(p => p.id === promo.id);
-    if (index > -1) newPromos[index] = promo;
-    else newPromos.push(promo);
-    onUpdate({ ...db, promoCodes: newPromos });
-    setEditingPromo(null);
-    setIsAddingPromo(false);
-    showToast("Promo-kod saqlandi");
-  };
-
-  const createEmptyProduct = (): Product => ({
-    id: Date.now(),
-    sku: `SKU-${Date.now().toString().slice(-4)}`,
-    price: 0,
-    currency: "UZS",
-    translations: {
-      uz: { name: '', description: '' },
-      ru: { name: '', description: '' },
-      en: { name: '', description: '' },
-      tr: { name: '', description: '' }
-    },
-    stock: 0,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    image: '',
-    categoryId: db.categories[0]?.id || 0
-  });
-
-  const createEmptyPromo = (): GlobalPromoCode => ({
-    id: Date.now().toString(),
-    code: '',
-    type: 'PERCENT',
-    value: 0,
-    min_amount: 10000,
-    expiry_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    is_active: true
-  });
+  const stats = getStats();
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 min-h-screen flex flex-col lg:flex-row gap-10">
-      <aside className="lg:w-72 space-y-4">
-        <div className="bg-brand-dark dark:bg-white/5 p-6 rounded-[2.5rem] shadow-xl border border-white/10">
-          <div className="flex items-center gap-3 mb-8">
-            <img src={db.companyInfo.logo} className="w-10 h-10 object-contain" alt="Logo" />
-            <span className="font-black text-white uppercase tracking-tighter">Panel</span>
-          </div>
-          
-          <nav className="space-y-2">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'products', label: 'Mahsulotlar', icon: Package },
-              { id: 'promos', label: 'Promo-kodlar', icon: Ticket },
-              { id: 'company', label: 'Kompaniya', icon: Building2 },
-              { id: 'about', label: 'Biz haqimizda', icon: Info },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all ${activeTab === tab.id ? 'bg-brand-mint text-white shadow-lg' : 'text-gray-400 hover:bg-white/5'}`}>
-                <tab.icon size={20} />
-                {tab.label}
-              </button>
-            ))}
-            <button onClick={handleLogout} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-rose-400 hover:bg-rose-500/10 transition-all mt-8">
-              <LogOut size={20} /> Chiqish
-            </button>
+      <aside className="lg:w-64 space-y-4">
+        <div className="bg-brand-dark p-8 rounded-[2.5rem] shadow-xl text-white">
+          <nav className="space-y-4">
+            <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-4 py-3 font-bold uppercase tracking-widest text-[10px] ${activeTab === 'dashboard' ? 'text-brand-mint' : 'text-gray-400'}`}><LayoutDashboard size={18} /> Dashboard</button>
+            <button onClick={() => setActiveTab('orders')} className={`w-full flex items-center gap-4 py-3 font-bold uppercase tracking-widest text-[10px] ${activeTab === 'orders' ? 'text-brand-mint' : 'text-gray-400'}`}><Activity size={18} /> Buyurtmalar</button>
+            <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-4 py-3 font-bold uppercase tracking-widest text-[10px] ${activeTab === 'products' ? 'text-brand-mint' : 'text-gray-400'}`}><Package size={18} /> Mahsulotlar</button>
+            {/* Fix: use block statement for multiple actions in onClick to avoid testing 'void' from logoutAdmin() for truthiness */}
+            <button onClick={() => { logoutAdmin(); setIsAuthenticated(false); }} className="w-full flex items-center gap-4 py-3 font-bold uppercase tracking-widest text-[10px] text-rose-400 mt-10"><LogOut size={18} /> Chiqish</button>
           </nav>
         </div>
       </aside>
 
-      <main className="flex-1 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+      <main className="flex-1 space-y-8">
         {activeTab === 'dashboard' && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
-              <p className="text-[10px] font-black uppercase opacity-40 tracking-widest mb-2">Mahsulotlar</p>
-              <h3 className="text-5xl font-black text-brand-mint">{db.products.length}</h3>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-white/5 p-10 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
+              <p className="text-xs font-black uppercase opacity-40 mb-2">Jami Sotuv</p>
+              <h3 className="text-4xl font-black text-brand-mint">{stats.totalSales.toLocaleString()} UZS</h3>
             </div>
-            <div className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
-              <p className="text-[10px] font-black uppercase opacity-40 tracking-widest mb-2">Promo-kodlar</p>
-              <h3 className="text-5xl font-black text-brand-mint">{db.promoCodes.length}</h3>
+            <div className="bg-white dark:bg-white/5 p-10 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
+              <p className="text-xs font-black uppercase opacity-40 mb-2">Buyurtmalar</p>
+              <h3 className="text-4xl font-black text-brand-mint">{stats.total} ta</h3>
+            </div>
+            <div className="bg-white dark:bg-white/5 p-10 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-xl">
+              <p className="text-xs font-black uppercase opacity-40 mb-2">Bekor qilingan</p>
+              <h3 className="text-4xl font-black text-rose-500">{stats.cancelled} ta</h3>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'orders' && (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-black uppercase">Buyurtmalar Ro'yxati</h2>
+            <div className="grid gap-6">
+              {(db.orders || []).sort((a,b) => b.id.localeCompare(a.id)).map(order => (
+                <div key={order.id} className="bg-white dark:bg-white/5 p-8 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-md flex flex-col md:flex-row gap-8 items-start md:items-center">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${order.status === 'COMPLETED' ? 'bg-brand-mint/10 text-brand-mint' : order.status === 'CANCELLED' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        {order.status}
+                      </span>
+                      <span className="text-xs opacity-50 font-bold">#{order.id.slice(-6)}</span>
+                    </div>
+                    <h4 className="text-xl font-black">{order.firstName} {order.lastName}</h4>
+                    <p className="text-sm font-bold text-brand-mint">{order.totalPrice.toLocaleString()} UZS</p>
+                    <div className="text-xs opacity-50 font-medium">
+                      {order.items.map(i => `${i.product.translations.uz.name} (x${i.quantity})`).join(', ')}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {order.status === 'PENDING' && (
+                      <>
+                        <button onClick={() => handleStatusChange(order.id, 'COMPLETED')} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-2xl hover:bg-brand-mint hover:text-white transition-all"><Check /></button>
+                        <button onClick={() => handleStatusChange(order.id, 'CANCELLED')} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all"><Ban /></button>
+                      </>
+                    )}
+                    {order.status !== 'PENDING' && (
+                       <button onClick={() => handleStatusChange(order.id, 'PENDING')} className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-white/10 text-gray-400 rounded-2xl"><Clock size={18} /></button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {activeTab === 'products' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-3xl font-black uppercase tracking-tight">Mahsulotlar Ro'yxati</h2>
-              <button onClick={() => { setIsAddingProduct(true); setEditingProduct(createEmptyProduct()); }} className="flex items-center gap-2 px-6 py-3 gradient-mint text-white rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all text-xs">
-                <Plus size={18} /> Qo'shish
-              </button>
-            </div>
+            <h2 className="text-3xl font-black uppercase">Mahsulotlar</h2>
             <div className="grid gap-4">
-              {db.products.map(product => (
-                <div key={product.id} className="bg-white dark:bg-white/5 p-5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-md flex items-center gap-6 group hover:border-brand-mint/30 transition-all">
-                  <img src={product.image} className="w-20 h-20 rounded-2xl object-cover shadow-lg" />
-                  <div className="flex-1">
-                    <h4 className="text-xl font-black">{product.translations.uz.name}</h4>
-                    <p className="text-sm opacity-50 font-bold">{product.price.toLocaleString()} {product.currency}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditingProduct(product)} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={18} /></button>
-                    <button onClick={() => handleDeleteProduct(product.id)} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={18} /></button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'promos' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-3xl font-black uppercase tracking-tight">Global Promo-kodlar</h2>
-              <button onClick={() => { setIsAddingPromo(true); setEditingPromo(createEmptyPromo()); }} className="flex items-center gap-2 px-6 py-3 gradient-mint text-white rounded-xl font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all text-xs">
-                <Plus size={18} /> Yangi Promo
-              </button>
-            </div>
-            <div className="grid gap-4">
-              {db.promoCodes.map(promo => (
-                <div key={promo.id} className="bg-white dark:bg-white/5 p-5 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-md flex items-center gap-6 group hover:border-brand-mint/30 transition-all">
-                  <div className="w-14 h-14 bg-brand-mint/10 rounded-2xl flex items-center justify-center text-brand-mint">
-                    <Ticket size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-xl font-black uppercase tracking-widest">{promo.code}</h4>
-                    <p className="text-xs font-bold opacity-50">
-                      {promo.type === 'PERCENT' ? `${promo.value}%` : `${promo.value.toLocaleString()} UZS`} • 
-                      Min: {promo.min_amount?.toLocaleString()} UZS
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditingPromo(promo)} className="w-12 h-12 flex items-center justify-center bg-brand-mint/10 text-brand-mint rounded-xl hover:bg-brand-mint hover:text-white transition-all"><Edit size={18} /></button>
-                    <button onClick={() => handleDeletePromo(promo.id)} className="w-12 h-12 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={18} /></button>
-                  </div>
-                </div>
-              ))}
+               {db.products.map(product => (
+                 <div key={product.id} className="bg-white dark:bg-white/5 p-6 rounded-[2rem] flex items-center gap-6 border border-gray-100 dark:border-white/5 shadow-sm">
+                   <img src={product.image} className="w-16 h-16 rounded-xl object-cover" />
+                   <div className="flex-1">
+                     <h5 className="font-black uppercase tracking-tight">{product.translations.uz.name}</h5>
+                     <p className="text-xs opacity-50 font-bold">{product.price.toLocaleString()} UZS</p>
+                   </div>
+                   <div className="flex gap-2">
+                     <button className="p-3 bg-gray-100 dark:bg-white/10 rounded-xl"><Eye size={18} /></button>
+                     <button className="p-3 bg-rose-500/10 text-rose-500 rounded-xl"><Trash2 size={18} /></button>
+                   </div>
+                 </div>
+               ))}
             </div>
           </div>
         )}
       </main>
-
-      {(editingProduct || isAddingProduct) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
-           <div className="bg-white dark:bg-brand-dark w-full max-w-6xl p-8 md:p-10 rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh] space-y-8 border border-white/10">
-            <div className="flex justify-between items-center">
-              <h3 className="text-3xl font-black uppercase">{isAddingProduct ? "Yangi Mahsulot" : "Tahrirlash"}</h3>
-              <button onClick={() => { setEditingProduct(null); setIsAddingProduct(false); }} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="space-y-4">
-                <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Asosiy</p>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Mahsulot Rasmi</label>
-                  <div 
-                    onClick={() => productFileRef.current?.click()}
-                    className="relative group cursor-pointer aspect-square rounded-[2rem] bg-gray-50 dark:bg-white/5 border-2 border-dashed border-gray-200 dark:border-white/10 overflow-hidden flex flex-col items-center justify-center transition-all hover:border-brand-mint"
-                  >
-                    {editingProduct?.image ? (
-                      <>
-                        <img src={editingProduct.image} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Upload className="text-white" size={32} />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-brand-mint transition-colors">
-                        <Camera size={40} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Rasm yuklash</span>
-                      </div>
-                    )}
-                  </div>
-                  <input 
-                    type="file" 
-                    ref={productFileRef} 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
-                  />
-                  <p className="text-[8px] text-center opacity-30 font-bold uppercase tracking-widest mt-2">
-                    Rasm images/products/ papkasiga saqlanadi
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">SKU</label>
-                  <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.sku} onChange={e => setEditingProduct({...editingProduct!, sku: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Kategoriya</label>
-                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.categoryId} onChange={e => setEditingProduct({...editingProduct!, categoryId: Number(e.target.value)})}>
-                    {db.categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name.uz}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Narx</label>
-                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.price} onChange={e => setEditingProduct({...editingProduct!, price: Number(e.target.value)})} />
-                </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase opacity-40 ml-2">Stock</label>
-                   <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.stock} onChange={e => setEditingProduct({...editingProduct!, stock: Number(e.target.value)})} />
-                </div>
-              </div>
-              <div className="space-y-4 md:col-span-2">
-                <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Tarjimalar</p>
-                <div className="grid md:grid-cols-2 gap-4">
-                   {(['uz', 'ru', 'en', 'tr'] as Language[]).map(l => (
-                    <div key={l} className="space-y-2 border-l-2 border-brand-mint/20 pl-4 py-1">
-                      <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Name</label>
-                      <input className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold mb-2" value={editingProduct?.translations[l].name} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], name: e.target.value } }})} />
-                      <label className="text-[10px] font-black uppercase opacity-40 ml-2">{l.toUpperCase()} Description</label>
-                      <textarea className="w-full p-3 rounded-xl bg-gray-50 dark:bg-white/10 outline-none font-bold h-24" value={editingProduct?.translations[l].description} onChange={e => setEditingProduct({...editingProduct!, translations: { ...editingProduct!.translations, [l]: { ...editingProduct!.translations[l], description: e.target.value } }})} />
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-4">
-                   <p className="font-black text-xs uppercase opacity-30 border-b pb-2">Chegirma (Discount)</p>
-                   <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Turi</label>
-                        <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.type || 'PERCENT'} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { start_date: '', end_date: '', value: 0 }), type: e.target.value as any } })}>
-                          <option value="PERCENT">Foiz (%)</option>
-                          <option value="FIXED">Summa</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px) font-black uppercase opacity-40 ml-2">Qiymat</label>
-                        <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.value || 0} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { start_date: '', end_date: '', type: 'PERCENT' }), value: Number(e.target.value) } })} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Boshlanish</label>
-                        <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.start_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { value: 0, end_date: '', type: 'PERCENT' }), start_date: new Date(e.target.value).toISOString() } })} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase opacity-40 ml-2">Tugash</label>
-                        <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingProduct?.discount?.end_date?.split('T')[0] || ''} onChange={e => setEditingProduct({...editingProduct!, discount: { ...(editingProduct!.discount || { value: 0, start_date: '', type: 'PERCENT' }), end_date: new Date(e.target.value).toISOString() } })} />
-                      </div>
-                   </div>
-                </div>
-              </div>
-            </div>
-            <button onClick={() => handleSaveProduct(editingProduct!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 mt-8">
-              <Save size={20} /> Mahsulotni saqlash
-            </button>
-           </div>
-        </div>
-      )}
-
-      {(editingPromo || isAddingPromo) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-dark/80 backdrop-blur-md">
-          <div className="bg-white dark:bg-brand-dark w-full max-w-md p-8 rounded-[3rem] shadow-2xl border border-white/10 space-y-8">
-            <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-black uppercase">{isAddingPromo ? "Yangi Promo" : "Tahrirlash"}</h3>
-              <button onClick={() => { setEditingPromo(null); setIsAddingPromo(false); }} className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full"><X /></button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase opacity-40 ml-2">KOD</label>
-                <input className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold uppercase tracking-widest" value={editingPromo?.code} onChange={e => setEditingPromo({...editingPromo!, code: e.target.value.toUpperCase()})} />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Turi</label>
-                  <select className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.type} onChange={e => setEditingPromo({...editingPromo!, type: e.target.value as any})}>
-                    <option value="PERCENT">Foiz (%)</option>
-                    <option value="FIXED">Summa (UZS)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase opacity-40 ml-2">Qiymat</label>
-                  <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.value} onChange={e => setEditingPromo({...editingPromo!, value: Number(e.target.value)})} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase opacity-40 ml-2">Minimal Summa (UZS)</label>
-                <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.min_amount} onChange={e => setEditingPromo({...editingPromo!, min_amount: Number(e.target.value)})} />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase opacity-40 ml-2">Amal qilish muddati</label>
-                <input type="date" className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/10 outline-none font-bold" value={editingPromo?.expiry_date?.split('T')[0]} onChange={e => setEditingPromo({...editingPromo!, expiry_date: new Date(e.target.value).toISOString()})} />
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <input type="checkbox" checked={editingPromo?.is_active} onChange={e => setEditingPromo({...editingPromo!, is_active: e.target.checked})} className="w-5 h-5 accent-brand-mint rounded" />
-                <span className="font-black text-xs uppercase opacity-40">Faol kod</span>
-              </div>
-            </div>
-
-            <button onClick={() => handleSavePromo(editingPromo!)} className="w-full py-5 gradient-mint text-white rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3">
-              <Save size={20} /> Promo-kodni saqlash
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
